@@ -30,13 +30,13 @@ const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v1/application?id=' +
 const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 const intents = new builder.IntentDialog({recognizers: [recognizer]})
     .matches('Greeting', (session) => {
-        session.send('You reached Greeting intent, you said \'%s\'.', session.message.text);
+        session.send('!!!You reached Greeting intent, you said \'%s\'.', session.message.text);
     })
     .matches('Help', (session) => {
-        session.send('You reached Help intent, you said \'%s\'.', session.message.text);
+        session.send('!!!You reached Help intent, you said \'%s\'.', session.message.text);
     })
     .matches('Cancel', (session) => {
-        session.send('You reached Cancel intent, you said \'%s\'.', session.message.text);
+        session.send('!!!You reached Cancel intent, you said \'%s\'.', session.message.text);
     })
     /*
     .matches('<yourIntent>')... See details at http://docs.botframework.com/builder/node/guides/understanding-natural-language/
