@@ -1,0 +1,107 @@
+Chatbot Web
+		Diálogo 1: Preguntas sobre la web. Buscando seguros de coches
+			Bot: Te damos la bienvenida a Liferay Mutual! ¿Cómo puedo ayudarte?
+			Human: Hola
+			Bot: Hola, te puedo preguntar cómo te llamas?
+			Human: Sara
+			Bot: Encantado de conocerte Sara, ¿en qué puedo ayudarte? :-)
+			Human: qué tipos de seguros de coches tenéis?
+			Bot: Me alegra que me hagas esa pregunta, tenemos los mejores seguros de coches del mercado.
+			Bot: Disponemos de cuatro tipos de seguro de coche: Todo riesgo, a terceros, con franquicia y para coches clásicos.
+			Bot: Esta es la página donde podrás encontrar toda la información: http://liferay-gs-ci:8888/web/liferay-mutual/car-insurance/third-party-insurance
+			Bot: Has encontrado algo que cuadre con lo que buscas? 
+			Human: Sí, ya tengo toda la información que necesito. Muchas gracias!
+			Bot: Encantado de haberte ayudado Sara! :-D
+			Bot: No me gustaría que me hiciesen chatarra! :-O ¿me ayudas con una buena valoración? Del 1 al 5, siendo 1 muy poco satisfecho :-( y 5 muuuuy satisfecho :-)
+			Human: 5
+			Bot: :-D :-D Muchas gracias! 
+			
+				
+		Diálogo 2: Reportar una incidencia
+			Bot: Hola! ¿Cómo puedo ayudarte?
+			Human: Hola
+			Bot: Hola, te puedo preguntar cómo te llamas?
+			Human: David
+			Bot: Hola David, bienvenido a Liferay Mutual. ¿En qué puedo ayudarte? :-)
+			Human: Quiero dar un parte
+			Bot: ¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?
+			Human: Coche
+			Bot: ¿Has tenido un accidente de tráfico?
+			Human: Sí
+			Bot: Ok, no te preocupes de nada, en un par de minutos habremos acabado. ;-)
+			Bot: (1/XXX)- ¿Tienes contrato con nosotros?
+			Human: sí
+			Bot: Perfecto! Sin eso no habría podido darte de alta el parte :-J
+			Bot: (2/XXX) - ¿qué día ocurrió el siniestro?
+			Human: 15/04/2018
+			Bot: Vaya, espero que no fuese muy grave :-(
+			Bot: (3/XXX) - ¿Nos puedes decir la dirección donde estaba el coche en ese momento?
+			Human: Calle del pez 1, madrid
+			Bot: (4/XXX) - ¿puedes decirme el nombre del conductor?
+			Human: yo mismo, David García
+			Bot: (5/XXX) - ¿matrícula del vehículo?
+			Human: 1111BBB
+			Bot: (6/XXX) - ¿marca y modelo del coche?
+			Human: Seat Toledo
+			Bot: Gracias, ya estamos a punto de terminar.
+			Bot:(7/XXX) - ¿Puedes decirme cuáles han sido los daños que ha sufrido tu vehículo?				
+			Human: La luna delantera del vehículo tiene una grieta.
+			Bot: (8/XXX) - ¿cómo ha ocurrido?
+			Human: Me he encontrado en este estado el coche, no sé que ha podido ocurrir.
+			Bot: Vaya mala suerte! Hiciste bien en elegir un seguro a todo riesgo :-)
+			Bot: (9/XXX) - ¿podrías hacer una foto de la luna?
+			Human: [Adjunta foto1]
+			Bot: (10/XXX) - ¿te importaría mandarme otra desde otra perspectiva?
+			Human: [Adjunta foto2]
+			Bot: Ya hemos terminado Carlos, espero que haya sido rápido. 
+			Bot: Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web o desde app, en el apartado de "Incidences".
+			Bot: Recuerda que para cualquier duda estamos disponibles en el teléfono 666999999.
+			Bot: Aunque soy un robot tengo mi corazoncito! :-) ¿me ayudas con una buena valoración? Del 1 al 5, siendo 1 muy poco satisfecho :-( y 5 muuuuy satisfecho :-)
+			Human: 5
+			Bot: Muchas gracias! 
+			Bot: Nos vemos pronto!! :-)
+				
+		
+	Chatbot Móvil:
+		Diálogo 1: Generar una incidencia.
+			Bot: Hola! ¿Cómo puedo ayudarte?
+			Human: Hola
+			Bot: Hola, te puedo preguntar cómo te llamas?
+			Human: Carlos
+			Bot: Hola Carlos, bienvenido a Liferay Mutual. ¿En qué puedo ayudarte? :-)
+			Human: Quiero dar un parte
+			Bot: ¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?
+			Human: Coche
+			Bot: ¿Has tenido un accidente de tráfico?
+			Human: Sí
+			Bot: Ok, no te preocupes de nada, en un par de minutos habremos acabado. ;-)
+			Bot: (1/XXX)- ¿Tienes contrato con nosotros?
+			Human: sí
+			Bot: Perfecto! Sin eso no habría podido darte de alta el parte :-J
+			Bot: (2/XXX) - ¿qué día ocurrió el siniestro?
+			Human: hoy, hace 15 minutos
+			Bot: Vaya, espero que estés bien!
+			Bot: (3/XXX) - ¿Nos puedes decir en la dirección donde ha ocurrido el accidente?
+			Human: Calle del pez 1, madrid
+			Bot: (4/XXX) - ¿puede decirme el nombre del conductor?
+			Human: yo mismo, Carlos López
+			Bot: (5/XXX) - ¿matrícula del vehículo?
+			Human: 9999AAA
+			Bot: (6/XXX) - ¿marca y modelo del coche?
+			Human: Seat Ibiza
+			Bot: Gracias, ya estamos a punto de terminar.
+			Bot:(7/XXX) - ¿Puedes decirme cuáles han sido los daños que ha sufrido tu vehículo?
+			Human: Ha resultado dañado el parachoches de delante, en la parte izquierda y también se ha roto el faro delantero izquierdo.
+			Bot: (8/XXX) - ¿cómo ha ocurrido?
+			Human: Había aceite en la calle, ha patinado el coche y me he golpeado con una farola.
+			Bot: Vaya mala suerte! Hiciste bien en elegir un seguro a todo riesgo :-)
+			Bot: (9/XXX) - ¿podrías hacer una foto del coche?
+			Human: [Adjunta foto1]
+			Bot: (10/XXX) - ¿te importaría mandarme otra desde otra perspectiva?
+			Human: [Adjunta foto2]
+			Bot: Ya hemos terminado Carlos, espero que haya sido rápido. 
+			Bot: Muchas gracias por la paciencia! En breve llegará la asistencia técnica a ayudarte. Recibirás una notificación al teléfono móvil en el que podrás ver el camino que sigue la grúa hasta que se encuentre contigo.
+			Human: ok 
+			Bot: Si necesitas comunicar con nosotros durante la espara estamos disponibles en el teléfono 666999999 para cualquier consulta que requieras.
+			Bot: Muchas gracias por la paciencia.
+			Bot: Nos vemos pronto!! :-)
