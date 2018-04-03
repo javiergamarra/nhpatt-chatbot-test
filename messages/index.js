@@ -27,7 +27,7 @@ const tableStorage = new botbuilder_azure.AzureBotStorage({gzipData: false}, azu
 const bot = new builder.UniversalBot(connector);
 bot.localePath(path.join(__dirname, './locale'));
 bot.set('storage', tableStorage);
-bot.library(locationDialog.createLibrary(process.env.BING_MAP));
+bot.library(locationDialog.createLibrary(process.env.BING_MAP || ''));
 
 const luisAppId = process.env.LuisAppId;
 const luisAPIKey = process.env.LuisAPIKey;
