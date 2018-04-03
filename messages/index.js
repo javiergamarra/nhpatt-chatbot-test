@@ -20,13 +20,13 @@ const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azu
     openIdMetadata: process.env['BotOpenIdMetadata']
 });
 
-// const tableName = 'botdata';
-// const azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
-// const tableStorage = new botbuilder_azure.AzureBotStorage({gzipData: false}, azureTableClient);
+const tableName = 'botdata';
+const azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
+const tableStorage = new botbuilder_azure.AzureBotStorage({gzipData: false}, azureTableClient);
 
 const bot = new builder.UniversalBot(connector);
 bot.localePath(path.join(__dirname, './locale'));
-// bot.set('storage', tableStorage);
+bot.set('storage', tableStorage);
 bot.library(locationDialog.createLibrary(process.env.BING_MAP));
 
 const luisAppId = process.env.LuisAppId;
