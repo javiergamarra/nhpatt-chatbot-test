@@ -8,7 +8,7 @@ const locale = 'en_US';
 const localhost = process.env.NODE_ENV === 'localhost';
 const username = localhost ? 'test@liferay.com' : 'test';
 const password = 'test';
-const host = (localhost ? 'http://localhost:8080' : 'http://liferay-gs-ci:8888') + '/api/jsonws/';
+const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
 
 const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
 
