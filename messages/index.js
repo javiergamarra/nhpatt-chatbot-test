@@ -169,7 +169,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 'Si necesitas comunicar con nosotros durante la espara estamos disponibles en el teléfono 666999999 para cualquier consulta que requieras.'
             ], 4000);
 
-            let randome = Math.random();
+            let random = Math.random();
 
             if (random > 0.5) {
                 session.beginDialog('survey');
