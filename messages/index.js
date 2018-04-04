@@ -10,6 +10,8 @@ const username = localhost ? 'test@liferay.com' : 'test';
 const password = 'test';
 const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
 
+console.log(username, host);
+
 const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
 
 const locationDialog = require('botbuilder-location');
@@ -24,10 +26,28 @@ const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azu
 // const azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
 // const tableStorage = new botbuilder_azure.AzureBotStorage({gzipData: false}, azureTableClient);
 
-const bot = new builder.UniversalBot(connector);
+const bot = new builder.UniversalBot(connector, {
+    localizerSettings: {
+        defaultLocale: 'es'
+    }
+});
 bot.localePath(path.join(__dirname, './locale'));
 // bot.set('storage', tableStorage);
 bot.library(locationDialog.createLibrary(process.env.BING_MAP || ''));
+
+bot.dialog('survey', [
+    (session) => {
+        setTimeout(function () {
+            builder.Prompts.number(session, 'No me gustaría que me hiciesen chatarra! 😯 ¿me ayudas con una buena valoración? Del 1 al 5, siendo 1 muy poco satisfecho 😞 y 5 muuuuy satisfecho 😊');
+        }, 3000);
+    },
+    (session, results, next) => {
+        session.userData.valoration = results.response;
+        let review = results.response < 3 ? '😞' : '😊';
+        session.send(review + ' Muchas gracias!');
+        next();
+    }
+]);
 
 const luisAppId = process.env.LuisAppId;
 const luisAPIKey = process.env.LuisAPIKey;
@@ -38,23 +58,43 @@ const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v1/application?id=' +
 const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 const intents = new builder.IntentDialog({recognizers: [recognizer]})
     .onBegin(function (session) {
-        session.send('Te damos la bienvenida a Liferay Mutual! ¿Cómo puedo ayudarte?');
+
+        session.userData.name = '';
+
+        session.send(
+            [
+                'Te damos la bienvenida a Liferay Mutual! ¿Cómo puedo ayudarte?',
+                'Hola! ¿Cómo puedo ayudarte?',
+            ]
+        );
     })
-    .matches('Greeting', [(session) => {
-        builder.Prompts.text(session, 'Hola, te puedo preguntar cómo te llamas?');
-    }, (session, results) => {
-        session.send('Encantado de conocerte \'%s\', ¿en qué puedo ayudarte? 😊😊', session.message.text);
-    }])
+    .matches('Greeting', [
+        (session) => {
+            builder.Prompts.text(session, 'Hola, te puedo preguntar cómo te llamas?');
+        },
+        (session, results) => {
+            session.userData.name = session.message.text;
+            session.send([
+                'Encantado de conocerte %s, ¿en qué puedo ayudarte? 😊',
+                'Hola %s, bienvenido a Liferay Mutual. ¿En qué puedo ayudarte? 😊'
+            ], session.message.text);
+        }])
     .matches('Help', (session) => {
-        session.send('!!!You reached Help intent, you said \'%s\'.', session.message.text);
+        session.send('Has pedido ayuda... \'%s\'.', session.message.text);
     })
     .matches('Parte', [
         (session, results, next) => {
+            builder.Prompts.text(session, '¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?');
+        },
+        (session, results, next) => {
+            builder.Prompts.confirm(session, '¿Has tenido un accidente de tráfico?');
+        },
+        (session, results, next) => {
+            session.send('Ok, no te preocupes de nada, en un par de minutos habremos acabado. ;-)');
 
-            session.send('¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?');
+            session.userData.type = results.response;
 
             const callback = (err, result) => {
-
                 let random = '' + Math.random();
 
                 session.userData.form = {};
@@ -67,21 +107,30 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                         }
                         session.userData.lastField = field.name;
 
+                        const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
+
+                        if (dialogDatum === 2) {
+                            session.send('Perfecto! Sin eso no habría podido darte de alta el parte :-J');
+                        } else if (dialogDatum === 7) {
+                            session.send('Gracias, ya estamos a punto de terminar.');
+                        }
+
+                        const label = dialogDatum + '/' + result.fields.length + ' - ' + field.label[locale];
                         if ('select' === (field.type)) {
                             let choices = field.options.map(x => x.value);
-                            builder.Prompts.choice(session, field.label, choices);
+                            builder.Prompts.choice(session, label, choices);
                         } else if ('date' === (field.dataType)) {
-                            builder.Prompts.time(session, field.label)
+                            builder.Prompts.time(session, label)
                         } else if ('document-library' === (field.dataType)) {
-                            builder.Prompts.attachment(session, field.label)
+                            builder.Prompts.attachment(session, label)
                         } else if ('geolocation' === (field.dataType)) {
                             locationDialog.getLocation(session, {
-                                prompt: field.label,
+                                prompt: label,
                                 requiredFields:
                                 locationDialog.LocationRequiredFields.locality
                             });
                         } else {
-                            builder.Prompts.text(session, field.label[locale]);
+                            builder.Prompts.text(session, label);
                         }
                     }
                 );
@@ -111,37 +160,49 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 },
                 processNewRecord);
 
-            session.send('¿Has tenido un accidente de tráfico?');
-            next();
+            session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.userData.name);
+
+            timeout(session, 'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web o desde app, en el apartado de "Incidences".', 2000);
+
+            timeout(session, [
+                'Recuerda que para cualquier duda estamos disponibles en el teléfono 666999999.',
+                'Si necesitas comunicar con nosotros durante la espara estamos disponibles en el teléfono 666999999 para cualquier consulta que requieras.'
+            ], 4000);
+
+            let randome = Math.random();
+
+            if (random > 0.5) {
+                session.beginDialog('survey');
+            }
         },
         (session, results, next) => {
-            session.send('Ok, no te preocupes de nada, en un par de minutos habremos acabado. ;-)');
+            timeout(session, 'Muchas gracias por la paciencia!', 6000);
+            timeout(session, 'Nos vemos pronto! 😊', 8000);
+
             next();
-        },
-        (session, results, next) => {
-            session.send('Ya hemos terminado Carlos, espero que haya sido rápido.');
-            session.send('Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web o desde app, en el apartado de "Incidences".');
-            session.send('Recuerda que para cualquier duda estamos disponibles en el teléfono 666999999.');
-            session.send('Aunque soy un robot tengo mi corazoncito! :-) ¿me ayudas con una buena valoración? Del 1 al 5, siendo 1 muy poco satisfecho :-( y 5 muuuuy satisfecho :-)');
-            session.send('Nos vemos pronto!! :-)');
-            next();
-        },
+        }
     ])
     .matches('Seguros', [
         (session) => {
-            session.send('Me alegra que me hagas esa pregunta, tenemos los mejores seguros de coches del mercado.');
-            session.send('Disponemos de cuatro tipos de seguro de coche: Todo riesgo, a terceros, con franquicia y para coches clásicos.');
-            session.send('Esta es la página donde podrás encontrar toda la información: http://liferay-gs-ci:8888/web/liferay-mutual/car-insurance/third-party-insurance');
-            session.send();
-            builder.Prompts.confirm(session, 'Has encontrado algo que cuadre con lo que buscas?', [{prompt: 'Sí'}, {prompt: 'No'}])
+
+            timeout(session, 'Me alegra que me hagas esa pregunta, tenemos los mejores seguros de coches del mercado.', 1000);
+            timeout(session, 'Disponemos de cuatro tipos de seguro de coche: <b>Todo riesgo, a terceros, con franquicia y para coches clásicos</b>.', 3000);
+            timeout(session, 'Esta es la página donde podrás encontrar toda la información: http://liferay-gs.liferay.org.es/web/liferay-mutual/car-insurance/third-party-insurance', 5000);
+
+            setTimeout(function () {
+                builder.Prompts.choice(session, 'Has encontrado algo que cuadre con lo que buscas?', ['Si', 'No'])
+            }, 7000);
         },
         (session, results) => {
-            session.send('Encantado de haberte ayudado Sara! :-D');
-            session.send('No me gustaría que me hiciesen chatarra! :-O ¿me ayudas con una buena valoración? Del 1 al 5, siendo 1 muy poco satisfecho :-( y 5 muuuuy satisfecho :-)');
+
+            session.sendTyping();
+            setTimeout(function () {
+                session.send('Encantado de haberte ayudado %s! :-D', session.userData.name);
+                session.sendTyping();
+            }, 1000);
+
+            session.beginDialog('survey');
         },
-        (session, results) => {
-            session.send(':-D :-D Muchas gracias!');
-        }
     ])
     .matches('Cancel', (session) => {
         session.send('You reached Cancel intent, you said \'%s\'.', session.message.text);
@@ -181,6 +242,13 @@ function post(url, form, callback) {
 }
 
 function processStructure(error, response, body) {
+
+    if (error) {
+        console.log(error);
+        return
+    }
+
+    console.log(body);
     const message = JSON.parse(body);
     return JSON.parse(message.definition);
 }
@@ -188,4 +256,12 @@ function processStructure(error, response, body) {
 function processNewRecord(error, response, body) {
     console.log('error:', error);
     console.log('body:', body);
+}
+
+function timeout(session, message, delay) {
+    session.sendTyping();
+    setTimeout(function () {
+        session.send(message);
+        session.sendTyping();
+    }, delay);
 }
