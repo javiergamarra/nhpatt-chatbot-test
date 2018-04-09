@@ -365,5 +365,3 @@ function parseBoolean(input) {
     }
     return undefined;
 }
-
-}
