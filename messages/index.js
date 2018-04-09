@@ -1,4 +1,5 @@
 'use strict';
+
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
 const request = require('request');
@@ -58,6 +59,7 @@ const luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.mic
 const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v1/application?id=' + luisAppId + '&subscription-key=' + luisAPIKey;
 
 const recognizer = new builder.LuisRecognizer(LuisModelUrl);
+
 const intents = new builder.IntentDialog({recognizers: [recognizer]})
     .onBegin(function (session) {
 
@@ -77,28 +79,40 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
         });
     })
     .matches('Greeting', [
-        (session) => {
-            builder.Prompts.text(session, 'Hola, te puedo preguntar cómo te llamas?');
+        (session, results, next) => {
+            if (session.userData.name) {
+                next();
+            } else {
+                builder.Prompts.text(session, 'Hola, te puedo preguntar cómo te llamas?');
+            }
         },
-        (session, results) => {
-            session.userData.name = session.message.text;
+        (session) => {
+            if (!session.userData.name) {
+                session.userData.name = session.message.text;
+            }
             session.send([
                 'Encantado de conocerte %s, ¿en qué puedo ayudarte? 😊',
                 'Hola %s, bienvenido a Liferay Mutual. ¿En qué puedo ayudarte? 😊'
-            ], session.message.text);
+            ], session.userData.name);
+
+            session.send('A día de hoy, te puedo decir que seguros puedes contratar o dar un parte');
+
         }])
     .matches('Help', (session) => {
         session.send('Has pedido ayuda... \'%s\'.', session.message.text);
     })
     .matches('Parte', [
-        // (session, results, next) => {
-        //     builder.Prompts.text(session, '¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?');
-        // },
-        // (session, results, next) => {
-        //     builder.Prompts.confirm(session, '¿Has tenido un accidente de tráfico?');
-        // },
-        (session, results, next) => {
+        (session) => {
+            builder.Prompts.text(session, '¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?');
+        },
+        (session) => {
+            builder.Prompts.confirm(session, '¿Has tenido un accidente de tráfico?');
+        },
+        (session, results) => {
+
+
             session.send('Ok, no te preocupes de nada, en un par de minutos habremos acabado. 😉');
+            session.send('Vamos a hacerte una serie de preguntas para poder ayudarte mejor');
 
             session.userData.type = results.response;
 
@@ -111,52 +125,9 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                     (session, results, next) => {
 
                         const userData = session.userData;
-                        const lastField = userData.lastField;
-                        if (lastField && results && results.response) {
-
-                            let response = results.response;
-                            if (results.response.entity) {
-                                userData.form[lastField] = '["Yes"]';
-                            } else if (results.response.geo) {
-                                userData.form[lastField] = '{"latitude":40.38787898231359, "longitude":-3.7037189304828644}';
-                                delete userData.form[lastField];
-                            } else if (results.response.resolution) {
-                                userData.form[lastField] = results.response.resolution.start;
-                            } else if (Array.isArray(results.response)) {
-
-                                const file = results.response[0];
-
-                                request({
-                                    encoding: null,
-                                    uri: file.contentUrl
-                                }, function (error, response, body2) {
-                                    console.log('error:', error); // Print the error if one occurred
-                                    console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-                                    // console.log('body:', body2); // Print the HTML for the Google homepage.
-
-                                    // const result = getByteArray(body2);
-
-                                    // console.log(body2.hexEncode());
-                                    // console.log(result);
-                                    post('dlapp/add-file-entry', {
-                                        'repositoryId': 20152,
-                                        'folderId': 184570,
-                                        'sourceFileName': file.name,
-                                        'mimeType': file.contentType,
-                                        'title': file.name,
-                                        'description': '-',
-                                        'changeLog': '-',
-                                        'bytes': '[' + [...body2].toString() + ']',
-                                    }, processNewRecord);
-
-                                });
-
-                                userData.form[lastField] = {};
-                            } else {
-                                userData.form[lastField] = response;
-                            }
+                        if (userData.lastField && results && results.response) {
+                            processResults(session, results.response, () => next());
                         }
-                        userData.lastField = field.name;
 
                         const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
 
@@ -164,29 +135,20 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                             session.send('Perfecto! Sin eso no habría podido darte de alta el parte :-J');
                         } else if (dialogDatum === 7) {
                             session.send('Gracias, ya estamos a punto de terminar.');
+                        } else if (session.userData.lastField && session.userData.lastField.dataType === 'date' && session.message.text) {
+                            if (session.message.text.toLowerCase() === 'hoy') {
+                                session.send('En breve llegará la asistencia técnica a ayudarte. ' +
+                                    'Recibirás una notificación al teléfono móvil en el que podrás ver el camino que sigue la grúa hasta que se encuentre contigo.');
+                            } else {
+                                session.send('En breve recibirás un correo electrónico con el acuse de recibo del alta del parte. ' +
+                                    'Además podrás consultar su estado desde la página web o desde app, en el apartado de "Incidences"');
+                            }
                         }
 
-                        const label = dialogDatum + '/' + result.fields.length + ' - ' + field.label[locale];
-                        if ('select' === (field.type)) {
-                            let choices = field.options.map(x => x.label[locale]);
-                            // builder.Prompts.choice(session, label, choices);
-                            next();
-                        } else if ('date' === (field.dataType)) {
-                            // builder.Prompts.time(session, label)
-                            next();
-                        } else if ('document-library' === (field.dataType)) {
-                            builder.Prompts.attachment(session, label)
-                        } else if ('geolocation' === (field.dataType)) {
-                            // locationDialog.getLocation(session, {
-                            //     prompt: label,
-                            //     requiredFields:
-                            //     locationDialog.LocationRequiredFields.locality
-                            // });
-                            next();
-                        } else {
-                            // builder.Prompts.text(session, label);
-                            next();
-                        }
+                        userData.lastField = field;
+
+                        createPromptsAndDealWithSpecialCases(session, result, field);
+
                     }
                 );
 
@@ -196,44 +158,55 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
             };
 
             const asyncFun = (error, response, body) => {
-                let processStructure1 = processStructure(error, response, body);
-                callback(null, processStructure1);
+                callback(null, processStructure(error, response, body));
             };
 
             post('ddm.ddmstructure/get-structure', {'structureId': 157436}, asyncFun);
         },
-        (session, results, next) => {
+        (session, results) => {
 
             console.log(JSON.stringify(session.userData.form));
 
-            post('ddl.ddlrecord/add-record',
-                {
-                    groupId: 20152,
-                    recordSetId: 157439,
-                    displayIndex: 0,
-                    fieldsMap: JSON.stringify(session.userData.form)
-                },
-                processNewRecord);
+            processResults(session, results.response, () =>
+                post('ddl.ddlrecord/add-record',
+                    {
+                        groupId: 20152,
+                        // recordSetId: 157439,
+                        recordSetId: 271054,
+                        displayIndex: 0,
+                        fieldsMap: JSON.stringify(session.userData.form)
+                    },
+                    processNewRecord
+                )
+            );
 
             session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.userData.name);
 
             timeout(session,
-                'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web o desde app, en el apartado de "Incidences".', 2000);
+                'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el ' +
+                'acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web' +
+                ' o desde app, en el apartado de "Incidences".', 2000);
 
             timeout(session, [
                 'Recuerda que para cualquier duda estamos disponibles en el teléfono 666999999.',
-                'Si necesitas comunicar con nosotros durante la espara estamos disponibles en el teléfono 666999999 para cualquier consulta que requieras.'
+                'Si necesitas comunicar con nosotros durante la espara estamos disponibles en el teléfono 666999999 para cualquier consulta que requieras.',
+                'Recuerda instalarte nuestra app!'
             ], 4000);
 
             let random = Math.random();
 
             if (random > 0.5) {
-                session.beginDialog('survey');
+                setTimeout(function () {
+                    session.beginDialog('survey');
+                }, 5000);
             }
         },
         (session, results, next) => {
-            timeout(session, 'Muchas gracias por la paciencia!', 6000);
-            timeout(session, 'Nos vemos pronto! 😊', 8000);
+            timeout(session, 'Muchas gracias por la paciencia!', 2000);
+
+            setTimeout(function () {
+                session.send('Nos vemos pronto! 😊');
+            }, 4000);
 
             next();
         }
@@ -249,7 +222,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 builder.Prompts.choice(session, 'Has encontrado algo que cuadre con lo que buscas?', ['Si', 'No'])
             }, 7000);
         },
-        (session, results) => {
+        (session) => {
 
             session.sendTyping();
             setTimeout(function () {
@@ -257,7 +230,10 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 session.sendTyping();
             }, 1000);
 
-            session.beginDialog('survey');
+            setTimeout(function () {
+                session.beginDialog('survey');
+            }, 2000);
+
         },
     ])
     .matches('Cancel', (session) => {
@@ -290,6 +266,88 @@ if (useEmulator) {
     module.exports = connector.listen();
 }
 
+
+function processResults(session, response, callback) {
+
+    const userData = session.userData;
+    const lastField = userData.lastField.name;
+
+    if (response.geo) {
+        // '{"latitude":40.38787898231359, "longitude":-3.7037189304828644}'
+        userData.form[lastField] = '{\"latitude\":' + response.geo.latitude + ', \"longitude\":' + response.geo.longitude + '}';
+    } else if (response.resolution) {
+        //  "2018-04-03",
+        const d = response.resolution.start;
+        userData.form[lastField] = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    } else if (response.entity) {
+        //"[\"Yes\"]",
+        userData.form[lastField] = '[\"' + userData.lastField.options.filter(x => x.label[locale] === response.entity)[0].value + '\"]';
+    } else if (Array.isArray(response)) {
+
+        const file = response[0];
+
+        // "{\"groupId\":20152, \"uuid\":\"ba2795ce-ebbb-d458-e7f1-5532d4c9ac2d\", \"version\":1, \"folderId\":184570, \"title\":20180403_142339_132}"
+
+        request({
+            encoding: null,
+            uri: file.contentUrl
+        }, function (error, response, body) {
+            post('dlapp/add-file-entry', {
+                'repositoryId': 20152,
+                'folderId': 184570,
+                'sourceFileName': file.name,
+                'mimeType': file.contentType,
+                'title': file.name,
+                'description': '-',
+                'changeLog': '-',
+                'bytes': '[' + [...body].toString() + ']',
+            }, function processNewRecord(error, response, body) {
+                console.log('error:', error);
+                console.log('body:', body);
+
+                const obj = JSON.parse(body);
+
+                userData.form[lastField] = '{' +
+                    '\"groupId\":20152, ' +
+                    '\"uuid":\"' + obj.uuid + '", ' +
+                    '\"version\":1.0,' +
+                    '\"folderId\":184570, ' +
+                    '\"title\":' + obj.fileName + '}';
+                callback();
+            });
+        });
+    } else {
+        userData.form[lastField] = response;
+    }
+}
+
+function createPromptsAndDealWithSpecialCases(session, result, field) {
+    const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
+
+    const label = dialogDatum + '/' + result.fields.length + ' - ' + field.label[locale];
+
+    if ('select' === (field.type)) {
+        let choices = field.options.map(x => x.label[locale]);
+        const choiceSynonyms = [
+            {value: 'Sí', synonyms: ['Si', 'Sí', 'Yes']},
+            {value: 'No', synonyms: ['No', 'Nop']}
+        ];
+        builder.Prompts.choice(session, label, choices.indexOf('Sí') !== -1 ? choiceSynonyms : choices);
+    } else if ('date' === (field.dataType)) {
+        builder.Prompts.time(session, label);
+    } else if ('document-library' === (field.dataType)) {
+        builder.Prompts.attachment(session, label)
+    } else if ('geolocation' === (field.dataType)) {
+        locationDialog.getLocation(session, {
+            prompt: label,
+            requiredFields:
+            locationDialog.LocationRequiredFields.locality
+        });
+    } else {
+        builder.Prompts.text(session, label);
+    }
+}
+
 function post(url, form, callback) {
     request
         .post(host + url, {form}, callback)
@@ -303,7 +361,6 @@ function processStructure(error, response, body) {
         return
     }
 
-    console.log(body);
     const message = JSON.parse(body);
     return JSON.parse(message.definition);
 }
