@@ -1,10 +1,11 @@
 'use strict';
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
-const path = require('path');
 const request = require('request');
+const locationDialog = require('botbuilder-location');
+require('request-to-curl');
 
-const locale = 'en_US';
+const locale = 'es_ES';
 const localhost = process.env.NODE_ENV === 'localhost';
 const username = localhost ? 'test@liferay.com' : 'test';
 const password = 'test';
@@ -14,7 +15,6 @@ console.log(username, host);
 
 const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
 
-const locationDialog = require('botbuilder-location');
 
 const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
     appId: process.env['MicrosoftAppId'],
@@ -22,18 +22,20 @@ const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azu
     openIdMetadata: process.env['BotOpenIdMetadata']
 });
 
+const bot = new builder.UniversalBot(connector, {
+    localizerSettings: {
+        defaultLocale: 'es',
+        botLocalePath: './locale'
+    }
+});
+
 // const tableName = 'botdata';
 // const azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
 // const tableStorage = new botbuilder_azure.AzureBotStorage({gzipData: false}, azureTableClient);
-
-const bot = new builder.UniversalBot(connector, {
-    localizerSettings: {
-        defaultLocale: 'es'
-    }
-});
-bot.localePath(path.join(__dirname, './locale'));
 // bot.set('storage', tableStorage);
-bot.library(locationDialog.createLibrary(process.env.BING_MAP || ''));
+
+const lib = locationDialog.createLibrary(process.env.BING_MAP || '');
+bot.library(lib);
 
 bot.dialog('survey', [
     (session) => {
@@ -67,6 +69,12 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 'Hola! ¿Cómo puedo ayudarte?',
             ]
         );
+
+        session.preferredLocale('es', function (err) {
+            if (err) {
+                session.error(err);
+            }
+        });
     })
     .matches('Greeting', [
         (session) => {
@@ -83,14 +91,14 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
         session.send('Has pedido ayuda... \'%s\'.', session.message.text);
     })
     .matches('Parte', [
+        // (session, results, next) => {
+        //     builder.Prompts.text(session, '¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?');
+        // },
+        // (session, results, next) => {
+        //     builder.Prompts.confirm(session, '¿Has tenido un accidente de tráfico?');
+        // },
         (session, results, next) => {
-            builder.Prompts.text(session, '¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?');
-        },
-        (session, results, next) => {
-            builder.Prompts.confirm(session, '¿Has tenido un accidente de tráfico?');
-        },
-        (session, results, next) => {
-            session.send('Ok, no te preocupes de nada, en un par de minutos habremos acabado. ;-)');
+            session.send('Ok, no te preocupes de nada, en un par de minutos habremos acabado. 😉');
 
             session.userData.type = results.response;
 
@@ -100,12 +108,55 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 session.userData.form = {};
 
                 let arr = result.fields.map(field =>
-                    (session, results) => {
+                    (session, results, next) => {
 
-                        if (session.userData.lastField) {
-                            session.userData.form[session.userData.lastField] = results && results.response;
+                        const userData = session.userData;
+                        const lastField = userData.lastField;
+                        if (lastField && results && results.response) {
+
+                            let response = results.response;
+                            if (results.response.entity) {
+                                userData.form[lastField] = '["Yes"]';
+                            } else if (results.response.geo) {
+                                userData.form[lastField] = '{"latitude":40.38787898231359, "longitude":-3.7037189304828644}';
+                                delete userData.form[lastField];
+                            } else if (results.response.resolution) {
+                                userData.form[lastField] = results.response.resolution.start;
+                            } else if (Array.isArray(results.response)) {
+
+                                const file = results.response[0];
+
+                                request({
+                                    encoding: null,
+                                    uri: file.contentUrl
+                                }, function (error, response, body2) {
+                                    console.log('error:', error); // Print the error if one occurred
+                                    console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+                                    // console.log('body:', body2); // Print the HTML for the Google homepage.
+
+                                    // const result = getByteArray(body2);
+
+                                    // console.log(body2.hexEncode());
+                                    // console.log(result);
+                                    post('dlapp/add-file-entry', {
+                                        'repositoryId': 20152,
+                                        'folderId': 184570,
+                                        'sourceFileName': file.name,
+                                        'mimeType': file.contentType,
+                                        'title': file.name,
+                                        'description': '-',
+                                        'changeLog': '-',
+                                        'bytes': '[' + [...body2].toString() + ']',
+                                    }, processNewRecord);
+
+                                });
+
+                                userData.form[lastField] = {};
+                            } else {
+                                userData.form[lastField] = response;
+                            }
                         }
-                        session.userData.lastField = field.name;
+                        userData.lastField = field.name;
 
                         const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
 
@@ -117,20 +168,24 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
                         const label = dialogDatum + '/' + result.fields.length + ' - ' + field.label[locale];
                         if ('select' === (field.type)) {
-                            let choices = field.options.map(x => x.value);
-                            builder.Prompts.choice(session, label, choices);
+                            let choices = field.options.map(x => x.label[locale]);
+                            // builder.Prompts.choice(session, label, choices);
+                            next();
                         } else if ('date' === (field.dataType)) {
-                            builder.Prompts.time(session, label)
+                            // builder.Prompts.time(session, label)
+                            next();
                         } else if ('document-library' === (field.dataType)) {
                             builder.Prompts.attachment(session, label)
                         } else if ('geolocation' === (field.dataType)) {
-                            locationDialog.getLocation(session, {
-                                prompt: label,
-                                requiredFields:
-                                locationDialog.LocationRequiredFields.locality
-                            });
+                            // locationDialog.getLocation(session, {
+                            //     prompt: label,
+                            //     requiredFields:
+                            //     locationDialog.LocationRequiredFields.locality
+                            // });
+                            next();
                         } else {
-                            builder.Prompts.text(session, label);
+                            // builder.Prompts.text(session, label);
+                            next();
                         }
                     }
                 );
@@ -162,7 +217,8 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.userData.name);
 
-            timeout(session, 'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web o desde app, en el apartado de "Incidences".', 2000);
+            timeout(session,
+                'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web o desde app, en el apartado de "Incidences".', 2000);
 
             timeout(session, [
                 'Recuerda que para cualquier duda estamos disponibles en el teléfono 666999999.',
@@ -186,7 +242,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
         (session) => {
 
             timeout(session, 'Me alegra que me hagas esa pregunta, tenemos los mejores seguros de coches del mercado.', 1000);
-            timeout(session, 'Disponemos de cuatro tipos de seguro de coche: <b>Todo riesgo, a terceros, con franquicia y para coches clásicos</b>.', 3000);
+            timeout(session, 'Disponemos de cuatro tipos de seguro de coche: Todo riesgo, a terceros, con franquicia y para coches clásicos.', 3000);
             timeout(session, 'Esta es la página donde podrás encontrar toda la información: http://liferay-gs.liferay.org.es/web/liferay-mutual/car-insurance/third-party-insurance', 5000);
 
             setTimeout(function () {
@@ -222,7 +278,6 @@ bot.on('conversationUpdate', function (message) {
         });
     }
 });
-
 
 if (useEmulator) {
     const restify = require('restify');
@@ -264,4 +319,51 @@ function timeout(session, message, delay) {
         session.send(message);
         session.sendTyping();
     }, delay);
+}
+
+lib.dialog('confirm-dialog', createDialog(), true);
+
+function createDialog() {
+    return createBaseDialog()
+        .onBegin(function (session, args) {
+            const confirmationPrompt = args.confirmationPrompt;
+            session.send(confirmationPrompt).sendBatch();
+        })
+        .onDefault(function (session) {
+            const message = parseBoolean(session.message.text);
+            if (typeof message === 'boolean') {
+                session.endDialogWithResult({response: {confirmed: message}});
+                return;
+            }
+            session.send('InvalidYesNo').sendBatch();
+        });
+}
+
+function createBaseDialog(options) {
+    return new builder.IntentDialog(options)
+        .matches(/^cancel$/i, function (session) {
+            session.send(consts_1.Strings.CancelPrompt);
+            session.endDialogWithResult({response: {cancel: true}});
+        })
+        .matches(/^help$/i, function (session) {
+            session.send(consts_1.Strings.HelpMessage).sendBatch();
+        })
+        .matches(/^reset$/i, function (session) {
+            session.endDialogWithResult({response: {reset: true}});
+        });
+}
+
+function parseBoolean(input) {
+    input = input.trim();
+    const yesExp = /^(y|si|sí|yes|yep|sure|ok|true)/i;
+    const noExp = /^(n|no|nope|not|false)/i;
+    if (yesExp.test(input)) {
+        return true;
+    }
+    else if (noExp.test(input)) {
+        return false;
+    }
+    return undefined;
+}
+
 }
