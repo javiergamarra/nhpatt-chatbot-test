@@ -11,7 +11,7 @@
   "DeleteCommand": "delete",
   "DeleteFavoriteAbortion": "Ok, %s will remain a favorite location.",
   "DeleteFavoriteConfirmationAsk": "Are you sure you want to delete %s from your favorite locations?",
-  "DialogStartBranchAsk": "¿Cómo quieres escoger una localización?",
+  "DialogStartBranchAsk": "How would you like to choose a location?",
   "DuplicateFavoriteNameResponse": "%s is already listed in your favorites. Please type or say a different name for this address.",
   "EditCommand": "edit",
   "EditFavoritePrompt": "Ok, let’s edit %s. Type or say a new address.",
@@ -39,6 +39,5 @@
   "SingleResultFound": "Encontré este resultado. ¿Es la dirección correcta?",
   "StreetAddress": "street address",
   "TitleSuffix": " escribe o di una dirección",
-  "LocationTitleSuffix": " escribe o di una dirección",
-  "TitleSuffixFacebook": " escribe o di una dirección"
+  "TitleSuffixFacebook": " Tap 'Send Location' to choose an address."
 }
