@@ -302,9 +302,9 @@ function processResults(session, response, callback) {
             post('dlapp/add-file-entry', {
                 'repositoryId': 20152,
                 'folderId': 184570,
-                'sourceFileName': file.name,
+                'sourceFileName': file.name || file.contentUrl,
                 'mimeType': file.contentType,
-                'title': file.name,
+                'title': file.name || file.contentUrl,
                 'description': '-',
                 'changeLog': '-',
                 'bytes': '[' + [...body].toString() + ']',
