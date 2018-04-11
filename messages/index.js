@@ -63,7 +63,7 @@ const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 const intents = new builder.IntentDialog({recognizers: [recognizer]})
     .onBegin(function (session) {
 
-        session.userData.name = '';
+        session.conversationData.name = '';
 
         session.send(
             [
@@ -80,20 +80,20 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
     })
     .matches('Greeting', [
         (session, results, next) => {
-            if (session.userData.name) {
+            if (session.conversationData.name) {
                 next();
             } else {
                 builder.Prompts.text(session, 'Hola, te puedo preguntar cómo te llamas?');
             }
         },
         (session) => {
-            if (!session.userData.name) {
-                session.userData.name = session.message.text;
+            if (!session.conversationData.name) {
+                session.conversationData.name = session.message.text;
             }
             session.send([
                 'Encantado de conocerte %s, ¿en qué puedo ayudarte? 😊',
                 'Hola %s, bienvenido a Liferay Mutual. ¿En qué puedo ayudarte? 😊'
-            ], session.userData.name);
+            ], session.conversationData.name);
 
             session.send('A día de hoy, te puedo decir que seguros puedes contratar o dar un parte');
 
@@ -102,8 +102,14 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
         session.send('Has pedido ayuda... \'%s\'.', session.message.text);
     })
     .matches('Parte', [
-        (session) => {
-            builder.Prompts.text(session, '¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?');
+        (session, results, next) => {
+
+            if (results.entities && results.entities.length) {
+                session.send('Ok, entendido, un parte de %s', results.entities[0].entity);
+                next();
+            } else {
+                builder.Prompts.text(session, '¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?');
+            }
         },
         (session) => {
             builder.Prompts.confirm(session, '¿Has tenido un accidente de tráfico?');
@@ -171,8 +177,8 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 post('ddl.ddlrecord/add-record',
                     {
                         groupId: 20152,
-                        // recordSetId: 157439,
-                        recordSetId: 271054,
+                        recordSetId: 157439,
+                        // recordSetId: 271054,
                         displayIndex: 0,
                         fieldsMap: JSON.stringify(session.userData.form)
                     },
@@ -180,7 +186,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 )
             );
 
-            session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.userData.name);
+            session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.conversationData.name);
 
             timeout(session,
                 'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el ' +
@@ -226,14 +232,13 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             session.sendTyping();
             setTimeout(function () {
-                session.send('Encantado de haberte ayudado %s! :-D', session.userData.name);
+                session.send('Encantado de haberte ayudado %s! :-D', session.conversationData.name);
                 session.sendTyping();
             }, 1000);
 
             setTimeout(function () {
                 session.beginDialog('survey');
             }, 2000);
-
         },
     ])
     .matches('Cancel', (session) => {
@@ -288,6 +293,8 @@ function processResults(session, response, callback) {
 
         // "{\"groupId\":20152, \"uuid\":\"ba2795ce-ebbb-d458-e7f1-5532d4c9ac2d\", \"version\":1, \"folderId\":184570, \"title\":20180403_142339_132}"
 
+        session.send(JSON.stringify(file)); //DEBUG
+
         request({
             encoding: null,
             uri: file.contentUrl
@@ -303,7 +310,12 @@ function processResults(session, response, callback) {
                 'bytes': '[' + [...body].toString() + ']',
             }, function processNewRecord(error, response, body) {
                 console.log('error:', error);
+
+                session.send(error); //DEBUG
+
                 console.log('body:', body);
+
+                session.send(JSON.stringify(body)); //DEBUG
 
                 const obj = JSON.parse(body);
 
