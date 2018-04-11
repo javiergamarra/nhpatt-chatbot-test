@@ -299,12 +299,13 @@ function processResults(session, response, callback) {
             encoding: null,
             uri: file.contentUrl
         }, function (error, response, body) {
+            const randomNumber = ('' + Math.random()).substr(2);
             post('dlapp/add-file-entry', {
                 'repositoryId': 20152,
                 'folderId': 184570,
-                'sourceFileName': file.name || file.contentUrl,
+                'sourceFileName': file.name || randomNumber,
                 'mimeType': file.contentType,
-                'title': file.name || file.contentUrl,
+                'title': file.name || randomNumber,
                 'description': '-',
                 'changeLog': '-',
                 'bytes': '[' + [...body].toString() + ']',
