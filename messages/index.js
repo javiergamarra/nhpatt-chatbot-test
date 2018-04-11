@@ -293,8 +293,6 @@ function processResults(session, response, callback) {
 
         // "{\"groupId\":20152, \"uuid\":\"ba2795ce-ebbb-d458-e7f1-5532d4c9ac2d\", \"version\":1, \"folderId\":184570, \"title\":20180403_142339_132}"
 
-        session.send(JSON.stringify(file)); //DEBUG
-
         request({
             encoding: null,
             uri: file.contentUrl
@@ -312,11 +310,7 @@ function processResults(session, response, callback) {
             }, function processNewRecord(error, response, body) {
                 console.log('error:', error);
 
-                session.send(error); //DEBUG
-
                 console.log('body:', body);
-
-                session.send(JSON.stringify(body)); //DEBUG
 
                 const obj = JSON.parse(body);
 
