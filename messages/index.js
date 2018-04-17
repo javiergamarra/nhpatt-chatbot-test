@@ -277,6 +277,13 @@ function processResults(session, response, callback) {
     const userData = session.userData;
     const lastField = userData.lastField.name;
 
+    if (!response) {
+        if (callback) {
+            callback();
+        }
+        return;
+    }
+
     if (response.geo) {
         // '{"latitude":40.38787898231359, "longitude":-3.7037189304828644}'
         userData.form[lastField] = '{\"latitude\":' + response.geo.latitude + ', \"longitude\":' + response.geo.longitude + '}';
@@ -315,10 +322,10 @@ function processResults(session, response, callback) {
                 const obj = JSON.parse(body);
 
                 userData.form[lastField] = '{' +
-                    '\"groupId\":20152, ' +
-                    '\"uuid":\"' + obj.uuid + '", ' +
+                    '\"groupId\":20152,' +
+                    '\"uuid":\"' + obj.uuid + '",' +
                     '\"version\":1.0,' +
-                    '\"folderId\":184570, ' +
+                    '\"folderId\":184570,' +
                     '\"title\":' + obj.fileName + '}';
                 callback();
             });
@@ -343,7 +350,7 @@ function createPromptsAndDealWithSpecialCases(session, result, field) {
     } else if ('date' === (field.dataType)) {
         builder.Prompts.time(session, label);
     } else if ('document-library' === (field.dataType)) {
-        builder.Prompts.attachment(session, label)
+        builder.Prompts.attachment(session, label, {maxRetries: 0})
     } else if ('geolocation' === (field.dataType)) {
         locationDialog.getLocation(session, {
             prompt: label,
