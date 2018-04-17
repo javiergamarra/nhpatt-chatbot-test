@@ -295,7 +295,7 @@ function processResults(session, results) {
             })
             .then(function (response) {
                 const obj = JSON.parse(response);
-                userData.form[userData.lastField.name] = '{' t+
+                userData.form[userData.lastField.name] = '{' +
                     '"groupId":20152,' +
                     '"uuid":"' + obj.uuid + '",' +
                     '"version":1.0,' +
