@@ -9,7 +9,7 @@ require('request-to-curl');
 const locale = 'es_ES';
 const localhost = process.env.NODE_ENV === 'localhost';
 const username = localhost ? 'test@liferay.com' : 'test';
-const password = 'test';
+const password = process.env.LIFERAY_PASSWORD;
 const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
 
 console.log(username, host);
