@@ -260,11 +260,11 @@ function createAndProcessFields(session, results, next, numberOfFields, field) {
 function processResults(session, results) {
 
     const userData = session.userData;
-    const lastField = userData.lastField.name;
-
     if (!results || !results.response || !userData.lastField) {
         return Promise.resolve();
     }
+
+    const lastField = userData.lastField.name;
 
     const response = results.response;
 
@@ -295,7 +295,7 @@ function processResults(session, results) {
             })
             .then(function (response) {
                 const obj = JSON.parse(response);
-                userData.form[userData.lastField.name] = '{' +
+                userData.form[userData.lastField.name] = '{' t+
                     '"groupId":20152,' +
                     '"uuid":"' + obj.uuid + '",' +
                     '"version":1.0,' +
