@@ -3,6 +3,8 @@
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
 const request = require('request');
+const rp = require('request-promise');
+const Promise = require('bluebird');
 const locationDialog = require('botbuilder-location');
 require('request-to-curl');
 
@@ -12,10 +14,7 @@ const username = localhost ? 'test@liferay.com' : 'test';
 const password = process.env.LIFERAY_PASSWORD;
 const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
 
-console.log(username, host);
-
 const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
-
 
 const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
     appId: process.env['MicrosoftAppId'],
@@ -40,9 +39,9 @@ bot.library(lib);
 
 bot.dialog('survey', [
     (session) => {
-        setTimeout(function () {
-            builder.Prompts.number(session, 'No me gustaría que me hiciesen chatarra! 😯 ¿me ayudas con una buena valoración? Del 1 al 5, siendo 1 muy poco satisfecho 😞 y 5 muuuuy satisfecho 😊');
-        }, 3000);
+        setTimeout(() => builder.Prompts.number(session, 'No me gustaría que me hiciesen chatarra! 😯 ' +
+            '¿me ayudas con una buena valoración? ' +
+            'Del 1 al 5, siendo 1 muy poco satisfecho 😞 y 5 muuuuy satisfecho 😊'), 3000);
     },
     (session, results, next) => {
         session.userData.valoration = results.response;
@@ -122,97 +121,70 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             session.userData.type = results.response;
 
-            const callback = (err, result) => {
-                let random = '' + Math.random();
+            post('ddm.ddmstructure/get-structure', {'structureId': 157436})
+                .then(response => {
+                    const message = JSON.parse(response);
+                    return JSON.parse(message.definition);
+                })
+                .then(function (result) {
+                    let random = '' + Math.random();
+                    let numberOfFields = result.fields.length;
 
-                session.userData.form = {};
+                    session.userData.form = {};
 
-                let arr = result.fields.map(field =>
-                    (session, results, next) => {
+                    let dialogs = result.fields.map(field =>
+                        (session, results, next) => createAndProcessFields(session, results, next, numberOfFields, field)
+                    );
 
-                        const userData = session.userData;
-                        if (userData.lastField && results && results.response) {
-                            processResults(session, results.response, () => next());
-                        }
+                    bot.dialog(random, dialogs);
 
-                        const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
-
-                        if (dialogDatum === 2) {
-                            session.send('Perfecto! Sin eso no habría podido darte de alta el parte :-J');
-                        } else if (dialogDatum === 7) {
-                            session.send('Gracias, ya estamos a punto de terminar.');
-                        } else if (session.userData.lastField && session.userData.lastField.dataType === 'date' && session.message.text) {
-                            if (session.message.text.toLowerCase() === 'hoy') {
-                                session.send('En breve llegará la asistencia técnica a ayudarte. ' +
-                                    'Recibirás una notificación al teléfono móvil en el que podrás ver el camino que sigue la grúa hasta que se encuentre contigo.');
-                            } else {
-                                session.send('En breve recibirás un correo electrónico con el acuse de recibo del alta del parte. ' +
-                                    'Además podrás consultar su estado desde la página web o desde app, en el apartado de "Incidences"');
-                            }
-                        }
-
-                        userData.lastField = field;
-
-                        createPromptsAndDealWithSpecialCases(session, result, field);
-
-                    }
-                );
-
-                bot.dialog(random, arr);
-
-                session.beginDialog(random);
-            };
-
-            const asyncFun = (error, response, body) => {
-                callback(null, processStructure(error, response, body));
-            };
-
-            post('ddm.ddmstructure/get-structure', {'structureId': 157436}, asyncFun);
-        },
-        (session, results) => {
-
-            console.log(JSON.stringify(session.userData.form));
-
-            processResults(session, results.response, () =>
-                post('ddl.ddlrecord/add-record',
-                    {
-                        groupId: 20152,
-                        recordSetId: 157439,
-                        // recordSetId: 271054,
-                        displayIndex: 0,
-                        fieldsMap: JSON.stringify(session.userData.form)
-                    },
-                    processNewRecord
-                )
-            );
-
-            session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.conversationData.name);
-
-            timeout(session,
-                'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el ' +
-                'acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web' +
-                ' o desde app, en el apartado de "Incidences".', 2000);
-
-            timeout(session, [
-                'Recuerda que para cualquier duda estamos disponibles en el teléfono 666999999.',
-                'Si necesitas comunicar con nosotros durante la espara estamos disponibles en el teléfono 666999999 para cualquier consulta que requieras.',
-                'Recuerda instalarte nuestra app!'
-            ], 4000);
-
-            let random = Math.random();
-
-            if (random > 0.5) {
-                setTimeout(function () {
-                    session.beginDialog('survey');
-                }, 5000);
-            }
+                    session.beginDialog(random);
+                })
+                .catch(err => console.log(err))
         },
         (session, results, next) => {
-            timeout(session, 'Muchas gracias por la paciencia!', 2000);
 
-            setTimeout(function () {
-                session.send('Nos vemos pronto! 😊');
-            }, 4000);
+            processResults(session, results)
+                .then(() => {
+                        console.log(JSON.stringify(session.userData.form));
+                        return post('ddl.ddlrecord/add-record',
+                            {
+                                groupId: 20152,
+                                recordSetId: 157439,
+                                // recordSetId: 271054,
+                                displayIndex: 0,
+                                fieldsMap: JSON.stringify(session.userData.form)
+                            }
+                        )
+                    }
+                )
+                .then(() => {
+                    session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.conversationData.name);
+
+                    timeout(session,
+                        'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el ' +
+                        'acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web' +
+                        ' o desde app, en el apartado de "Incidences".', 2000);
+
+                    timeout(session, [
+                        'Recuerda que para cualquier duda estamos disponibles en el teléfono 666999999.',
+                        'Si necesitas comunicar con nosotros durante la espara estamos disponibles en el teléfono 666999999 para cualquier consulta que requieras.',
+                        'Recuerda instalarte nuestra app!'
+                    ], 4000);
+
+                    let random = Math.random();
+
+                    if (random > 0.5) {
+                        setTimeout(() => session.beginDialog('survey'), 5000);
+                    } else {
+                        next();
+                    }
+                });
+        },
+        (session, results, next) => {
+
+            timeout(session, 'Muchas gracias por la paciencia!', 2000);
+            setTimeout(() => session.send('Nos vemos pronto! 😊'), 4000);
 
             next();
         }
@@ -224,21 +196,17 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
             timeout(session, 'Disponemos de cuatro tipos de seguro de coche: Todo riesgo, a terceros, con franquicia y para coches clásicos.', 3000);
             timeout(session, 'Esta es la página donde podrás encontrar toda la información: http://liferay-gs.liferay.org.es/web/liferay-mutual/car-insurance/third-party-insurance', 5000);
 
-            setTimeout(function () {
-                builder.Prompts.choice(session, 'Has encontrado algo que cuadre con lo que buscas?', ['Si', 'No'])
-            }, 7000);
+            setTimeout(() => builder.Prompts.choice(session, 'Has encontrado algo que cuadre con lo que buscas?', ['Si', 'No']), 7000);
         },
         (session) => {
 
             session.sendTyping();
-            setTimeout(function () {
+            setTimeout(() => {
                 session.send('Encantado de haberte ayudado %s! :-D', session.conversationData.name);
                 session.sendTyping();
             }, 1000);
 
-            setTimeout(function () {
-                session.beginDialog('survey');
-            }, 2000);
+            setTimeout(() => session.beginDialog('survey'), 2000);
         },
     ])
     .matches('Cancel', (session) => {
@@ -271,75 +239,92 @@ if (useEmulator) {
     module.exports = connector.listen();
 }
 
+function createAndProcessFields(session, results, next, numberOfFields, field) {
 
-function processResults(session, response, callback) {
+    processResults(session, results)
+        .then(() => {
+            const userData = session.userData;
+
+            const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
+
+            const label = dialogDatum + '/' + numberOfFields + ' - ' + field.label[locale];
+            writeEncouragingMessages(dialogDatum, session);
+
+            userData.lastField = field;
+
+            createPrompts(session, label, field);
+        })
+        .catch(err => console.log(err))
+}
+
+function processResults(session, results) {
 
     const userData = session.userData;
     const lastField = userData.lastField.name;
 
-    if (!response) {
-        if (callback) {
-            callback();
-        }
-        return;
+    if (!results || !results.response || !userData.lastField) {
+        return Promise.resolve();
     }
 
+    const response = results.response;
+
     if (response.geo) {
-        // '{"latitude":40.38787898231359, "longitude":-3.7037189304828644}'
         userData.form[lastField] = '{\"latitude\":' + response.geo.latitude + ', \"longitude\":' + response.geo.longitude + '}';
     } else if (response.resolution) {
-        //  "2018-04-03",
         const d = response.resolution.start;
         userData.form[lastField] = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
     } else if (response.entity) {
-        //"[\"Yes\"]",
         userData.form[lastField] = '[\"' + userData.lastField.options.filter(x => x.label[locale] === response.entity)[0].value + '\"]';
     } else if (Array.isArray(response)) {
 
         const file = response[0];
 
-        // "{\"groupId\":20152, \"uuid\":\"ba2795ce-ebbb-d458-e7f1-5532d4c9ac2d\", \"version\":1, \"folderId\":184570, \"title\":20180403_142339_132}"
-
-        request({
-            encoding: null,
-            uri: file.contentUrl
-        }, function (error, response, body) {
-            const randomNumber = ('' + Math.random()).substr(2);
-            post('dlapp/add-file-entry', {
-                'repositoryId': 20152,
-                'folderId': 184570,
-                'sourceFileName': file.name || randomNumber,
-                'mimeType': file.contentType,
-                'title': file.name || randomNumber,
-                'description': '-',
-                'changeLog': '-',
-                'bytes': '[' + [...body].toString() + ']',
-            }, function processNewRecord(error, response, body) {
-                console.log('error:', error);
-
-                console.log('body:', body);
-
-                const obj = JSON.parse(body);
-
-                userData.form[lastField] = '{' +
-                    '\"groupId\":20152,' +
-                    '\"uuid":\"' + obj.uuid + '",' +
-                    '\"version\":1.0,' +
-                    '\"folderId\":184570,' +
-                    '\"title\":' + obj.fileName + '}';
-                callback();
+        return rp({encoding: null, uri: file.contentUrl})
+            .then(function (response) {
+                const randomNumber = ('' + Math.random()).substr(2);
+                return post('dlapp/add-file-entry', {
+                    'repositoryId': 20152,
+                    'folderId': 184570,
+                    'sourceFileName': randomNumber,
+                    'mimeType': file.contentType,
+                    'title': randomNumber,
+                    'description': '-',
+                    'changeLog': '-',
+                    'bytes': '[' + [...response].toString() + ']',
+                })
+            })
+            .then(function (response) {
+                const obj = JSON.parse(response);
+                userData.form[userData.lastField.name] = '{' +
+                    '"groupId":20152,' +
+                    '"uuid":"' + obj.uuid + '",' +
+                    '"version":1.0,' +
+                    '"folderId":184570,' +
+                    '"title":"' + obj.fileName + '"}';
             });
-        });
     } else {
         userData.form[lastField] = response;
     }
+    return Promise.resolve();
 }
 
-function createPromptsAndDealWithSpecialCases(session, result, field) {
-    const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
+function writeEncouragingMessages(dialogDatum, session) {
+    if (dialogDatum === 2) {
+        session.send('Perfecto! Sin eso no habría podido darte de alta el parte :-J');
+    } else if (dialogDatum === 7) {
+        session.send('Gracias, ya estamos a punto de terminar.');
+    } else if (session.userData.lastField && session.userData.lastField.dataType === 'date' && session.message.text) {
+        if (session.message.text.toLowerCase() === 'hoy') {
+            session.send('En breve llegará la asistencia técnica a ayudarte. ' +
+                'Recibirás una notificación al teléfono móvil en el que podrás ver el camino que sigue la grúa hasta que se encuentre contigo.');
+        } else {
+            session.send('En breve recibirás un correo electrónico con el acuse de recibo del alta del parte. ' +
+                'Además podrás consultar su estado desde la página web o desde app, en el apartado de "Incidences"');
+        }
+    }
+}
 
-    const label = dialogDatum + '/' + result.fields.length + ' - ' + field.label[locale];
-
+function createPrompts(session, label, field) {
     if ('select' === (field.type)) {
         let choices = field.options.map(x => x.label[locale]);
         const choiceSynonyms = [
@@ -362,21 +347,8 @@ function createPromptsAndDealWithSpecialCases(session, result, field) {
     }
 }
 
-function post(url, form, callback) {
-    request
-        .post(host + url, {form}, callback)
-        .auth(username, password, true);
-}
-
-function processStructure(error, response, body) {
-
-    if (error) {
-        console.log(error);
-        return
-    }
-
-    const message = JSON.parse(body);
-    return JSON.parse(message.definition);
+function post(url, form) {
+    return rp.post(host + url, {form}).auth(username, password, true);
 }
 
 function processNewRecord(error, response, body) {
@@ -386,7 +358,7 @@ function processNewRecord(error, response, body) {
 
 function timeout(session, message, delay) {
     session.sendTyping();
-    setTimeout(function () {
+    setTimeout(() => {
         session.send(message);
         session.sendTyping();
     }, delay);
