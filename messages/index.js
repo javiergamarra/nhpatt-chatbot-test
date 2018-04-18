@@ -2,7 +2,6 @@
 
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
-const request = require('request');
 const rp = require('request-promise');
 const Promise = require('bluebird');
 const locationDialog = require('botbuilder-location');
@@ -10,8 +9,8 @@ require('request-to-curl');
 
 const locale = 'es_ES';
 const localhost = process.env.NODE_ENV === 'localhost';
-const username = process.env.LIFERAY_USER;
-const password = process.env.LIFERAY_PASSWORD;
+const USERNAME = process.env.LIFERAY_USER;
+const PASSWORD = process.env.LIFERAY_PASSWORD;
 const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
 
 const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
@@ -60,11 +59,11 @@ const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v1/application?id=' +
 const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 
 const intents = new builder.IntentDialog({recognizers: [recognizer]})
-    .onBegin(function (session, args) {
+    .onBegin(function (session) {
 
         session.conversationData.name = '';
 
-        session.send(JSON.stringify(session.message));
+        tryToLogin(session);
 
         session.send(
             [
@@ -82,8 +81,6 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
     .matches('Greeting', [
         (session, results, next) => {
 
-            session.send(JSON.stringify(session.message));
-
             if (session.conversationData.name) {
                 next();
             } else {
@@ -91,6 +88,9 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
             }
         },
         (session) => {
+
+            tryToLogin(session);
+
             if (!session.conversationData.name) {
                 session.conversationData.name = session.message.text;
             }
@@ -126,7 +126,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             session.userData.type = results.response;
 
-            post('ddm.ddmstructure/get-structure', {'structureId': 157436})
+            post(session, 'ddm.ddmstructure/get-structure', {'structureId': 157436})
                 .then(response => {
                     const message = JSON.parse(response);
                     return JSON.parse(message.definition);
@@ -152,7 +152,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
             processResults(session, results)
                 .then(() => {
                         console.log(JSON.stringify(session.userData.form));
-                        return post('ddl.ddlrecord/add-record',
+                        return post(session, 'ddl.ddlrecord/add-record',
                             {
                                 groupId: 20152,
                                 recordSetId: 157439,
@@ -287,7 +287,7 @@ function processResults(session, results) {
         return rp({encoding: null, uri: file.contentUrl})
             .then(function (response) {
                 const randomNumber = ('' + Math.random()).substr(2);
-                return post('dlapp/add-file-entry', {
+                return post(session, 'dlapp/add-file-entry', {
                     'repositoryId': 20152,
                     'folderId': 184570,
                     'sourceFileName': randomNumber,
@@ -352,13 +352,30 @@ function createPrompts(session, label, field) {
     }
 }
 
-function post(url, form) {
-    return rp.post(host + url, {form}).auth(username, password, true);
+function post(session, url, form) {
+
+    let post1 = rp.post(host + url, {form});
+
+    // session.send(JSON.stringify(session.userData));
+
+    if (session.userData && session.userData.username) {
+        return post1.auth(session.userData.username, session.userData.password, true);
+    } else {
+        return post1.auth(USERNAME, PASSWORD, true);
+    }
 }
 
-function processNewRecord(error, response, body) {
-    console.log('error:', error);
-    console.log('body:', body);
+function tryToLogin(session) {
+    let message = session.message;
+
+    // session.send('Intentando loguear...');
+    // session.send(session.message);
+
+    if (message && message.text && message.text.indexOf('start') !== -1) {
+        session.userData.username = message.text.replace('/start ', '');
+        session.userData.password = process.env.USER_PASSWORD;
+        session.send(session.userData.username + session.userData.password);
+    }
 }
 
 function timeout(session, message, delay) {
