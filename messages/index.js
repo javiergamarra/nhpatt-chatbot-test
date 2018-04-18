@@ -81,8 +81,6 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
     .matches('Greeting', [
         (session, results, next) => {
 
-            tryToLogin(session);
-
             if (session.conversationData.name) {
                 next();
             } else {
@@ -90,6 +88,9 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
             }
         },
         (session) => {
+
+            tryToLogin(session);
+
             if (!session.conversationData.name) {
                 session.conversationData.name = session.message.text;
             }
@@ -355,7 +356,7 @@ function post(session, url, form) {
 
     let post1 = rp.post(host + url, {form});
 
-    session.send(JSON.stringify(session.userData));
+    // session.send(JSON.stringify(session.userData));
 
     if (session.userData && session.userData.username) {
         return post1.auth(session.userData.username, session.userData.password, true);
@@ -367,8 +368,8 @@ function post(session, url, form) {
 function tryToLogin(session) {
     let message = session.message;
 
-    session.send('Intentando loguear...');
-    session.send(session.message);
+    // session.send('Intentando loguear...');
+    // session.send(session.message);
 
     if (message && message.text && message.text.indexOf('start') !== -1) {
         session.userData.username = message.text.replace('/start ', '');
