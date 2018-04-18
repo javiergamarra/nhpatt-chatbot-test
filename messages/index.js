@@ -366,7 +366,7 @@ function tryToLogin(session) {
     let message = session.message;
     if (message && message.text && message.text.indexOf('start') !== -1) {
         session.userData.username = message.text.replace('/start ', '');
-        session.userData.password = 'liferay'
+        session.userData.password = process.end.USER_PASSWORD;
     }
 }
 
