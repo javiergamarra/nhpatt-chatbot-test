@@ -355,6 +355,8 @@ function post(session, url, form) {
 
     let post1 = rp.post(host + url, {form});
 
+    session.send(JSON.stringify(session.userData));
+
     if (session.userData && session.userData.username) {
         return post1.auth(session.userData.username, session.userData.password, true);
     } else {
@@ -364,9 +366,13 @@ function post(session, url, form) {
 
 function tryToLogin(session) {
     let message = session.message;
+
+    session.send(session.message);
+
     if (message && message.text && message.text.indexOf('start') !== -1) {
         session.userData.username = message.text.replace('/start ', '');
         session.userData.password = process.end.USER_PASSWORD;
+        session.send(session.userData.username + session.userData.password);
     }
 }
 
