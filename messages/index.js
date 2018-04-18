@@ -59,7 +59,7 @@ const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v1/application?id=' +
 const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 
 const intents = new builder.IntentDialog({recognizers: [recognizer]})
-    .onBegin(function (session, args) {
+    .onBegin(function (session) {
 
         session.conversationData.name = '';
 
@@ -367,6 +367,7 @@ function post(session, url, form) {
 function tryToLogin(session) {
     let message = session.message;
 
+    session.send('Intentando loguear...');
     session.send(session.message);
 
     if (message && message.text && message.text.indexOf('start') !== -1) {
