@@ -60,9 +60,11 @@ const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v1/application?id=' +
 const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 
 const intents = new builder.IntentDialog({recognizers: [recognizer]})
-    .onBegin(function (session) {
+    .onBegin(function (session, args) {
 
         session.conversationData.name = '';
+
+        session.send(JSON.stringify(session.message));
 
         session.send(
             [
@@ -79,6 +81,9 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
     })
     .matches('Greeting', [
         (session, results, next) => {
+
+            session.send(JSON.stringify(session.message));
+
             if (session.conversationData.name) {
                 next();
             } else {
