@@ -216,6 +216,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
     ])
     .matches('Cancel', (session) => {
         session.send('You reached Cancel intent, you said \'%s\'.', session.message.text);
+        session.conversationData = {};
     })
     .onDefault((session) => {
         session.send('Sorry, I did not understand \'%s\'.', session.message.text);
@@ -287,6 +288,9 @@ function processResults(session, results) {
         return rp({encoding: null, uri: file.contentUrl})
             .then(function (response) {
                 const randomNumber = ('' + Math.random()).substr(2);
+
+                session.send(JSON.stringify(file));
+
                 return post(session, 'dlapp/add-file-entry', {
                     'repositoryId': 20152,
                     'folderId': 184570,
