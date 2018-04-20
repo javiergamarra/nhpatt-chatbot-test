@@ -207,7 +207,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             session.sendTyping();
             setTimeout(() => {
-                session.send('Encantado de haberte ayudado %s! :-D', session.conversationData.name);
+                session.send('Encantado de haberte ayudado %s! :-D', session.conversationData.name || '');
                 session.sendTyping();
             }, 1000);
 
@@ -287,16 +287,20 @@ function processResults(session, results) {
 
         return rp({encoding: null, uri: file.contentUrl})
             .then(function (response) {
+                // session.send(JSON.stringify(file));
                 const randomNumber = ('' + Math.random()).substr(2);
 
-                session.send(JSON.stringify(file));
+                let extension = file.contentType === 'image/png' ? '.png' :
+                    file.contentType === 'image/jpg' ? 'jpg' : 'application/octet-stream';
+
+                let fileName = file.name || (randomNumber + extension);
 
                 return post(session, 'dlapp/add-file-entry', {
                     'repositoryId': 20152,
                     'folderId': 184570,
-                    'sourceFileName': randomNumber,
+                    'sourceFileName': fileName,
                     'mimeType': file.contentType,
-                    'title': randomNumber,
+                    'title': fileName,
                     'description': '-',
                     'changeLog': '-',
                     'bytes': '[' + [...response].toString() + ']',
