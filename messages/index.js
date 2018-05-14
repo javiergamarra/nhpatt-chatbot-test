@@ -38,14 +38,14 @@ bot.library(lib);
 
 bot.dialog('survey', [
     (session) => {
-        setTimeout(() => builder.Prompts.number(session, 'No me gustaría que me hiciesen chatarra! 😯 ' +
-            '¿me ayudas con una buena valoración? ' +
-            'Del 1 al 5, siendo 1 muy poco satisfecho 😞 y 5 muuuuy satisfecho 😊'), 3000);
+        setTimeout(() => builder.Prompts.number(session, 'I would not like them to make me scrap! 😯 ' +
+            'Can you help me with a good assessment? ' +
+            'From 1 to 5, 1 being very little satisfied 😞 and 5 sooo satisfied 😊'), 3000);
     },
     (session, results, next) => {
         session.userData.valoration = results.response;
         let review = results.response < 3 ? '😞' : '😊';
-        session.send(review + ' Muchas gracias!');
+        session.send(review + ' Thank you very much!');
         next();
     }
 ]);
@@ -67,8 +67,8 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
         session.send(
             [
-                'Te damos la bienvenida a Liferay Mutual! ¿Cómo puedo ayudarte?',
-                'Hola! ¿Cómo puedo ayudarte?',
+                'Welcome to Liferay Mutual! How can I help you?',
+                'Hello! How can I help you?',
             ]
         );
 
