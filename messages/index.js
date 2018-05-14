@@ -7,7 +7,7 @@ const Promise = require('bluebird');
 const locationDialog = require('botbuilder-location');
 require('request-to-curl');
 
-const locale = 'es_ES';
+const locale = 'en_US';
 const localhost = process.env.NODE_ENV === 'localhost';
 const USERNAME = process.env.LIFERAY_USER;
 const PASSWORD = process.env.LIFERAY_PASSWORD;
