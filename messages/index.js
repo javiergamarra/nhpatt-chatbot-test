@@ -23,7 +23,7 @@ const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azu
 
 const bot = new builder.UniversalBot(connector, {
     localizerSettings: {
-        defaultLocale: 'es',
+        defaultLocale: 'en',
         botLocalePath: './locale'
     }
 });
