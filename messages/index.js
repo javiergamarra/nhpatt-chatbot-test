@@ -72,7 +72,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
             ]
         );
 
-        session.preferredLocale('es', function (err) {
+        session.preferredLocale('en', function (err) {
             if (err) {
                 session.error(err);
             }
