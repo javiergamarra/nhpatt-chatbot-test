@@ -99,7 +99,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 'Hello %s, welcome to Liferay Mutual. How can I help you? 😊'
             ], session.conversationData.name);
 
-            session.send('Today, I can tell you what insurance you can hire or give a part');
+            session.send('Today, I can tell you what insurance you can hire or give a claim');
 
         }])
     .matches('Help', (session) => {
@@ -112,7 +112,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 session.send('Ok, I understand, a part about %s', results.entities[0].entity);
                 next();
             } else {
-                builder.Prompts.text(session, 'Can you tell me about what kind of insurance do you want to register a part?');
+                builder.Prompts.text(session, 'Can you tell me about what kind of insurance do you want to register a claim?');
             }
         },
         (session) => {
