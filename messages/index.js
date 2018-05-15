@@ -194,7 +194,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
             next();
         }
     ])
-    .matches('Seguros', [
+    .matches('Insurances', [
         (session) => {
 
             timeout(session, 'I am glad you ask me that question, we have the best car insurance in the market.', 2000);
