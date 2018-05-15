@@ -99,7 +99,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 'Hello %s, welcome to Liferay Mutual. How can I help you? 😊'
             ], session.conversationData.name);
 
-            session.send('Today, I can tell you what insurance you can hire or give a claim');
+            session.send('Today, I can tell you what Insurance you can Hire or make a CLAIM');
 
         }])
     .matches('Help', (session) => {
