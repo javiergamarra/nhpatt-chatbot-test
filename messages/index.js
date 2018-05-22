@@ -133,7 +133,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 })
                 .then(function (result) {
 
-                    session.send(JSON.stringify(result));
+                    // session.send(JSON.stringify(result));
 
                     let random = '' + Math.random();
                     let numberOfFields = result.fields.length;
@@ -148,7 +148,10 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
                     session.beginDialog(random);
                 })
-                .catch(err => session.send(JSON.stringify(err)))
+                .catch(err =>
+                    // session.send(JSON.stringify(err))
+                    console.log(err)
+                )
         },
         (session, results, next) => {
 
