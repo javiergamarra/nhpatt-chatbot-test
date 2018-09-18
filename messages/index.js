@@ -126,7 +126,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             session.userData.type = results.response;
 
-            post(session, 'ddm.ddmstructure/get-structure', {'structureId': 157436})
+            post(session, 'ddm.ddmstructure/get-structure', {'structureId': 271050})
                 .then(response => {
                     const message = JSON.parse(response);
                     return JSON.parse(message.definition);
@@ -205,7 +205,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             timeout(session, 'Me alegra que me hagas esa pregunta, tenemos los mejores seguros de coches del mercado.', 1000);
             timeout(session, 'Disponemos de cuatro tipos de seguro de coche: Todo riesgo, a terceros, con franquicia y para coches clásicos.', 3000);
-            timeout(session, 'Esta es la página donde podrás encontrar toda la información: http://liferay-gs.liferay.org.es/web/liferay-mutual/car-insurance/third-party-insurance', 5000);
+            timeout(session, 'Esta es la página donde podrás encontrar toda la información: https://liferay-insurances-demo.liferay.org.es/web/liferay-mutual/car-insurance/third-party-insurance', 5000);
 
             setTimeout(() => builder.Prompts.choice(session, 'Has encontrado algo que cuadre con lo que buscas?', ['Si', 'No']), 7000);
         },
