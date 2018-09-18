@@ -23,7 +23,7 @@ const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azu
     openIdMetadata: process.env['BotOpenIdMetadata']
 });
 
-console.log('init...', appId, appPassword, host);
+console.log('init...', host);
 
 const bot = new builder.UniversalBot(connector, {
     localizerSettings: {
