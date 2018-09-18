@@ -4,18 +4,18 @@ console.log('1');
 
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
-const rp = require('request-promise');
-const Promise = require('bluebird');
-const locationDialog = require('botbuilder-location');
-const curl = require('request-to-curl');
+// const rp = require('request-promise');
+// const Promise = require('bluebird');
+// const locationDialog = require('botbuilder-location');
+// const curl = require('request-to-curl');
 
 console.log('2');
 
-const locale = 'es_ES';
+// const locale = 'es_ES';
 const localhost = process.env.NODE_ENV === 'localhost';
-const USERNAME = process.env.LIFERAY_USER;
-const PASSWORD = process.env.LIFERAY_PASSWORD;
-const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
+// const USERNAME = process.env.LIFERAY_USER;
+// const PASSWORD = process.env.LIFERAY_PASSWORD;
+// const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
 
 console.log('3');
 
