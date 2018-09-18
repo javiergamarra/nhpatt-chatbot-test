@@ -17,34 +17,36 @@ const localhost = process.env.NODE_ENV === 'localhost';
 // const PASSWORD = process.env.LIFERAY_PASSWORD;
 // const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
 
-console.log('3');
 
-const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
+"use strict";
+var builder = require("botbuilder");
+var botbuilder_azure = require("botbuilder-azure");
+var path = require('path');
 
-console.log('4', useEmulator);
+var useEmulator = (process.env.NODE_ENV == 'development');
 
-const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
+var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
     appId: process.env['MicrosoftAppId'],
     appPassword: process.env['MicrosoftAppPassword'],
     openIdMetadata: process.env['BotOpenIdMetadata']
 });
 
-console.log('5');
-
-const bot = new builder.UniversalBot(connector, {
-    localizerSettings: {
-        defaultLocale: 'es',
-        botLocalePath: './locale'
-    }
-});
-
-console.log('6');
-
-const path = require('path');
+/*----------------------------------------------------------------------------------------
+* Bot Storage: This is a great spot to register the private state storage for your bot.
+* We provide adapters for Azure Table, CosmosDb, SQL Azure, or you can implement your own!
+* For samples and documentation, see: https://github.com/Microsoft/BotBuilder-Azure
+* ---------------------------------------------------------------------------------------- */
 
 var tableName = 'botdata';
 var azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
 var tableStorage = new botbuilder_azure.AzureBotStorage({ gzipData: false }, azureTableClient);
+
+// Create your bot with a function to receive messages from the user
+// This default message handler is invoked if the user's utterance doesn't
+// match any intents handled by other dialogs.
+var bot = new builder.UniversalBot(connector, function (session, args) {
+    session.send('You reached the default message handler. You said \'%s\'.', session.message.text);
+});
 
 bot.localePath(path.join(__dirname, './locale'));
 bot.set('storage', tableStorage);
@@ -56,9 +58,12 @@ var luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.micro
 
 const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '?subscription-key=' + luisAPIKey;
 
+// Create a recognizer that gets intents from LUIS, and add it to the bot
 var recognizer = new builder.LuisRecognizer(LuisModelUrl);
 bot.recognizer(recognizer);
 
+// Add a dialog for each intent that the LUIS app recognizes.
+// See https://docs.microsoft.com/en-us/bot-framework/nodejs/bot-builder-nodejs-recognize-intent-luis
 bot.dialog('GreetingDialog',
     (session) => {
         session.send('You reached the Greeting intent. You said \'%s\'.', session.message.text);
@@ -66,8 +71,25 @@ bot.dialog('GreetingDialog',
     }
 ).triggerAction({
     matches: 'Greeting'
-});
+})
 
+bot.dialog('HelpDialog',
+    (session) => {
+        session.send('You reached the Help intent. You said \'%s\'.', session.message.text);
+        session.endDialog();
+    }
+).triggerAction({
+    matches: 'Help'
+})
+
+bot.dialog('CancelDialog',
+    (session) => {
+        session.send('You reached the Cancel intent. You said \'%s\'.', session.message.text);
+        session.endDialog();
+    }
+).triggerAction({
+    matches: 'Cancel'
+})
 
 if (useEmulator) {
     var restify = require('restify');
@@ -79,6 +101,71 @@ if (useEmulator) {
 } else {
     module.exports = connector.listen();
 }
+
+
+
+// console.log('3');
+//
+// const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
+//
+// console.log('4', useEmulator);
+//
+// const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
+//     appId: process.env['MicrosoftAppId'],
+//     appPassword: process.env['MicrosoftAppPassword'],
+//     openIdMetadata: process.env['BotOpenIdMetadata']
+// });
+//
+// console.log('5');
+//
+// const bot = new builder.UniversalBot(connector, {
+//     localizerSettings: {
+//         defaultLocale: 'es',
+//         botLocalePath: './locale'
+//     }
+// });
+//
+// console.log('6');
+//
+// const path = require('path');
+//
+// var tableName = 'botdata';
+// var azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
+// var tableStorage = new botbuilder_azure.AzureBotStorage({ gzipData: false }, azureTableClient);
+//
+// bot.localePath(path.join(__dirname, './locale'));
+// bot.set('storage', tableStorage);
+//
+// // Make sure you add code to validate these fields
+// var luisAppId = process.env.LuisAppId;
+// var luisAPIKey = process.env.LuisAPIKey;
+// var luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com';
+//
+// const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '?subscription-key=' + luisAPIKey;
+//
+// var recognizer = new builder.LuisRecognizer(LuisModelUrl);
+// bot.recognizer(recognizer);
+//
+// bot.dialog('GreetingDialog',
+//     (session) => {
+//         session.send('You reached the Greeting intent. You said \'%s\'.', session.message.text);
+//         session.endDialog();
+//     }
+// ).triggerAction({
+//     matches: 'Greeting'
+// });
+//
+//
+// if (useEmulator) {
+//     var restify = require('restify');
+//     var server = restify.createServer();
+//     server.listen(3978, function() {
+//         console.log('test bot endpont at http://localhost:3978/api/messages');
+//     });
+//     server.post('/api/messages', connector.listen());
+// } else {
+//     module.exports = connector.listen();
+// }
 
 
 
