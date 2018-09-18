@@ -199,7 +199,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             timeout(session, 'I am glad you ask me that question, we have the best car insurance in the market.', 2000);
             timeout(session, 'We have four types of car insurance: All risk, third parties, franchise and classic cars.', 3000);
-            timeout(session, 'This is the page where you can find all the information: https://liferay-insurances-demo.liferay.org.es//web/liferay-mutual/car-insurance/third-party-insurance', 5000);
+            timeout(session, 'This is the page where you can find all the information: https://liferay-insurances-demo.liferay.org.es/web/liferay-mutual/car-insurance/third-party-insurance', 5000);
 
             setTimeout(() => builder.Prompts.choice(session, 'Have you found something that matches what you are looking for?', ['Yes', 'No']), 7000);
         },
