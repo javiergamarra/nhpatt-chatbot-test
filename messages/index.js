@@ -1,5 +1,7 @@
 'use strict';
 
+console.log('starting...');
+
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
 const rp = require('request-promise');
@@ -20,6 +22,8 @@ const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azu
     appPassword: process.env['MicrosoftAppPassword'],
     openIdMetadata: process.env['BotOpenIdMetadata']
 });
+
+console.log('init...', appId, appPassword, host);
 
 const bot = new builder.UniversalBot(connector, {
     localizerSettings: {
