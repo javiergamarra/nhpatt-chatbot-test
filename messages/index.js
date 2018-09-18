@@ -126,7 +126,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             session.userData.type = results.response;
 
-            post(session, 'ddm.ddmstructure/get-structure', {'structureId': 157436})
+            post(session, 'ddm.ddmstructure/get-structure', {'structureId': 271050})
                 .then(response => {
                     const message = JSON.parse(response);
                     return JSON.parse(message.definition);
