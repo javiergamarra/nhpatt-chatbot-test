@@ -4,10 +4,10 @@ console.log('1');
 
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
-// const rp = require('request-promise');
-// const Promise = require('bluebird');
-// const locationDialog = require('botbuilder-location');
-// const curl = require('request-to-curl');
+const rp = require('request-promise');
+const Promise = require('bluebird');
+const locationDialog = require('botbuilder-location');
+const curl = require('request-to-curl');
 
 console.log('2');
 
