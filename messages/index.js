@@ -19,8 +19,8 @@ const localhost = process.env.NODE_ENV === 'localhost';
 
 
 "use strict";
-var builder = require("botbuilder");
-var botbuilder_azure = require("botbuilder-azure");
+// var builder = require("botbuilder");
+// var botbuilder_azure = require("botbuilder-azure");
 var path = require('path');
 
 var useEmulator = (process.env.NODE_ENV == 'development');
