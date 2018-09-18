@@ -1,11 +1,67 @@
 'use strict';
 
+// var builder = require("botbuilder");
+// var botbuilder_azure = require("botbuilder-azure");
+// var path = require('path');
+//
+// var useEmulator = (process.env.NODE_ENV == 'development');
+//
+// var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
+//     appId: process.env['MicrosoftAppId'],
+//     appPassword: process.env['MicrosoftAppPassword'],
+//     openIdMetadata: process.env['BotOpenIdMetadata']
+// });
+//
+//
+// var bot = new builder.UniversalBot(connector, function (session, args) {
+//     session.send('You reached the default message handler. You said \'%s\'.', session.message.text);
+// });
+//
+// bot.localePath(path.join(__dirname, './locale'));
+// bot.set('storage', tableStorage);
+//
+// // Make sure you add code to validate these fields
+// var luisAppId = process.env.LuisAppId;
+// var luisAPIKey = process.env.LuisAPIKey;
+// var luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com';
+//
+// const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '?subscription-key=' + luisAPIKey;
+//
+// var recognizer = new builder.LuisRecognizer(LuisModelUrl);
+// bot.recognizer(recognizer);
+//
+// bot.dialog('GreetingDialog',
+//     (session) => {
+//         session.send('You reached the Greeting intent. You said \'%s\'.', session.message.text);
+//         session.endDialog();
+//     }
+// ).triggerAction({
+//     matches: 'Greeting'
+// });
+//
+//
+// if (useEmulator) {
+//     var restify = require('restify');
+//     var server = restify.createServer();
+//     server.listen(3978, function() {
+//         console.log('test bot endpont at http://localhost:3978/api/messages');
+//     });
+//     server.post('/api/messages', connector.listen());
+// } else {
+//     module.exports = connector.listen();
+// }
+
+
+console.log('1');
+
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
 const rp = require('request-promise');
 const Promise = require('bluebird');
 const locationDialog = require('botbuilder-location');
-require('request-to-curl');
+const curl = require('request-to-curl');
+
+console.log('2');
 
 const locale = 'es_ES';
 const localhost = process.env.NODE_ENV === 'localhost';
@@ -13,7 +69,11 @@ const USERNAME = process.env.LIFERAY_USER;
 const PASSWORD = process.env.LIFERAY_PASSWORD;
 const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
 
+console.log('3');
+
 const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
+
+console.log('4', useEmulator);
 
 const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
     appId: process.env['MicrosoftAppId'],
@@ -21,12 +81,16 @@ const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azu
     openIdMetadata: process.env['BotOpenIdMetadata']
 });
 
+console.log('5');
+
 const bot = new builder.UniversalBot(connector, {
     localizerSettings: {
         defaultLocale: 'es',
         botLocalePath: './locale'
     }
 });
+
+console.log('6');
 
 // const tableName = 'botdata';
 // const azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
@@ -50,13 +114,21 @@ bot.dialog('survey', [
     }
 ]);
 
+console.log('7');
+
 const luisAppId = process.env.LuisAppId;
 const luisAPIKey = process.env.LuisAPIKey;
 const luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com'; //'westeurope.api.cognitive.microsoft.com';
 
-const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v1/application?id=' + luisAppId + '&subscription-key=' + luisAPIKey;
+console.log('8');
+
+const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '&subscription-key=' + luisAPIKey;
+
+console.log('9');
 
 const recognizer = new builder.LuisRecognizer(LuisModelUrl);
+
+console.log('10');
 
 const intents = new builder.IntentDialog({recognizers: [recognizer]})
     .onBegin(function (session) {
