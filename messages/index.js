@@ -42,6 +42,9 @@ console.log('6');
 
 const path = require('path');
 
+var tableName = 'botdata';
+var azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
+var tableStorage = new botbuilder_azure.AzureBotStorage({ gzipData: false }, azureTableClient);
 
 bot.localePath(path.join(__dirname, './locale'));
 bot.set('storage', tableStorage);
