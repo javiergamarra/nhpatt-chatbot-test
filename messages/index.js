@@ -161,7 +161,7 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                         return post(session, 'ddl.ddlrecord/add-record',
                             {
                                 groupId: 20152,
-                                recordSetId: 271054,
+                                recordSetId: 157439,
                                 // recordSetId: 271054,
                                 displayIndex: 0,
                                 fieldsMap: JSON.stringify(session.userData.form)
@@ -303,7 +303,7 @@ function processResults(session, results) {
 
                 return post(session, 'dlapp/add-file-entry', {
                     'repositoryId': 20152,
-                    'folderId': 184528,
+                    'folderId': 184570,
                     'sourceFileName': fileName,
                     'mimeType': file.contentType,
                     'title': fileName,
@@ -318,7 +318,7 @@ function processResults(session, results) {
                     '"groupId":20152,' +
                     '"uuid":"' + obj.uuid + '",' +
                     '"version":1.0,' +
-                    '"folderId":184528,' +
+                    '"folderId":184570,' +
                     '"title":"' + obj.fileName + '"}';
             });
     } else {
