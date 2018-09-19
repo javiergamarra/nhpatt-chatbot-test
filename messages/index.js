@@ -4,10 +4,10 @@ console.log('1');
 
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
-const rp = require('request-promise');
-const Promise = require('bluebird');
-const locationDialog = require('botbuilder-location');
-const curl = require('request-to-curl');
+// const rp = require('request-promise');
+// const Promise = require('bluebird');
+// const locationDialog = require('botbuilder-location');
+// const curl = require('request-to-curl');
 
 console.log('2');
 
@@ -18,7 +18,6 @@ const localhost = process.env.NODE_ENV === 'localhost';
 // const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
 
 
-"use strict";
 // var builder = require("botbuilder");
 // var botbuilder_azure = require("botbuilder-azure");
 var path = require('path');
