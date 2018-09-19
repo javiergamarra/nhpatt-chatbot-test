@@ -8,17 +8,17 @@ const opts = {
 };
 const log = require('simple-node-logger').createRollingFileLogger( opts );
 
-log.error('1.0');
-const rp = require('request-promise');
+log.error('1.0.0');
+// const rp = require('request-promise');
 
 log.error('1.1');
 const botbuilder_azure = require('botbuilder-azure');
 log.error('1.2');
 var builder = require('botbuilder');
 log.error('1.3');
-const Promise1 = require('bluebird');
+// const Promise1 = require('bluebird');
 log.error('1.4');
-const locationDialog = require('botbuilder-location');
+// const locationDialog = require('botbuilder-location');
 log.error('1.5');
 const curl = require('request-to-curl');
 log.error('1.6');
