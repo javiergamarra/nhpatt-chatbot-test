@@ -8,7 +8,6 @@
     "botbuilder": "^3.13.1",
     "botbuilder-azure": "^3.0.4",
     "botbuilder-location": "^2.0.0",
-    "nodemon": "^1.17.2",
     "path": "^0.12.7",
     "request": "^2.85.0",
     "request-promise": "^4.2.2",
@@ -16,7 +15,8 @@
     "simple-node-logger": "^0.93.40"
   },
   "devDependencies": {
-    "restify": "^5.0.0"
+    "restify": "^5.0.0",
+    "nodemon": "^1.17.2"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
