@@ -8,9 +8,9 @@ const opts = {
 };
 const log = require('simple-node-logger').createRollingFileLogger( opts );
 
-log.error('1');
+log.error('1_');
 
-const builder = require('botbuilder');
+var builder = require('botbuilder');
 log.error('1.1');
 const botbuilder_azure = require('botbuilder-azure');
 log.error('1.2');
