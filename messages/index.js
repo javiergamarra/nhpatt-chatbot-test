@@ -11,7 +11,7 @@ const log = require('simple-node-logger').createRollingFileLogger(opts);
 try {
 
 
-    console.log('1');
+    log.error('1');
 
     const builder = require('botbuilder');
     const botbuilder_azure = require('botbuilder-azure');
@@ -20,7 +20,7 @@ try {
     const locationDialog = require('botbuilder-location');
     const curl = require('request-to-curl');
 
-    console.log('2');
+    log.error('2');
 
     const locale = 'es_ES';
     const localhost = process.env.NODE_ENV === 'localhost';
