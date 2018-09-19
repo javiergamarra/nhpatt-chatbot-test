@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "bluebird": "^3.5.2",
     "botbuilder": "^3.13.1",
     "botbuilder-azure": "^3.0.4",
     "nodemon": "^1.17.2",
