@@ -2,7 +2,7 @@
 
 const opts = {
     errorEventName:'error',
-    logDirectory:'./',
+    logDirectory:'D:/home/site/wwwroot/messages>',
     fileNamePattern:'roll-<DATE>.log',
     dateFormat:'YYYY.MM.DD'
 };
