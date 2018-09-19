@@ -1,16 +1,15 @@
 'use strict';
 
+const opts = {
+    errorEventName: 'error',
+    logDirectory: 'D:/home/site/wwwroot/messages/',
+    fileNamePattern: 'roll-<DATE>.log',
+    dateFormat: 'YYYY.MM.DD'
+};
+const log = require('simple-node-logger').createRollingFileLogger(opts);
+
 try {
 
-    const opts = {
-        errorEventName: 'error',
-        logDirectory: 'D:/home/site/wwwroot/messages/',
-        fileNamePattern: 'roll-<DATE>.log',
-        dateFormat: 'YYYY.MM.DD'
-    };
-    const log = require('simple-node-logger').createRollingFileLogger(opts);
-
-    log.error('1.0');
 
     console.log('1');
 
@@ -22,8 +21,6 @@ try {
     const curl = require('request-to-curl');
 
     console.log('2');
-
-    log.error('2.0');
 
     const locale = 'es_ES';
     const localhost = process.env.NODE_ENV === 'localhost';
@@ -116,11 +113,11 @@ try {
     }
 
 
-// log.error('3');
+// console.log('3');
 //
 // const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
 //
-// log.error('4', useEmulator);
+// console.log('4', useEmulator);
 //
 // const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
 //     appId: process.env['MicrosoftAppId'],
@@ -128,7 +125,7 @@ try {
 //     openIdMetadata: process.env['BotOpenIdMetadata']
 // });
 //
-// log.error('5');
+// console.log('5');
 //
 // const bot = new builder.UniversalBot(connector, {
 //     localizerSettings: {
@@ -137,8 +134,48 @@ try {
 //     }
 // });
 //
-// log.error('6');
+// console.log('6');
 //
+// const path = require('path');
+//
+// var tableName = 'botdata';
+// var azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
+// var tableStorage = new botbuilder_azure.AzureBotStorage({ gzipData: false }, azureTableClient);
+//
+// bot.localePath(path.join(__dirname, './locale'));
+// bot.set('storage', tableStorage);
+//
+// // Make sure you add code to validate these fields
+// var luisAppId = process.env.LuisAppId;
+// var luisAPIKey = process.env.LuisAPIKey;
+// var luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com';
+//
+// const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '?subscription-key=' + luisAPIKey;
+//
+// var recognizer = new builder.LuisRecognizer(LuisModelUrl);
+// bot.recognizer(recognizer);
+//
+// bot.dialog('GreetingDialog',
+//     (session) => {
+//         session.send('You reached the Greeting intent. You said \'%s\'.', session.message.text);
+//         session.endDialog();
+//     }
+// ).triggerAction({
+//     matches: 'Greeting'
+// });
+//
+//
+// if (useEmulator) {
+//     var restify = require('restify');
+//     var server = restify.createServer();
+//     server.listen(3978, function() {
+//         console.log('test bot endpont at http://localhost:3978/api/messages');
+//     });
+//     server.post('/api/messages', connector.listen());
+// } else {
+//     module.exports = connector.listen();
+// }
+
 
 // const tableName = 'botdata';
 // const azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
@@ -162,21 +199,21 @@ try {
 //     }
 // ]);
 //
-// log.error('7');
+// console.log('7');
 //
 // const luisAppId = process.env.LuisAppId;
 // const luisAPIKey = process.env.LuisAPIKey;
 // const luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com'; //'westeurope.api.cognitive.microsoft.com';
 //
-// log.error('8');
+// console.log('8');
 //
 // const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '&subscription-key=' + luisAPIKey;
 //
-// log.error('9');
+// console.log('9');
 //
 // const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 //
-// log.error('10');
+// console.log('10');
 //
 // const intents = new builder.IntentDialog({recognizers: [recognizer]})
 //     .onBegin(function (session) {
@@ -270,14 +307,14 @@ try {
 //                 })
 //                 .catch(err =>
 //                     // session.send(JSON.stringify(err))
-//                     log.error(err)
+//                     console.log(err)
 //                 )
 //         },
 //         (session, results, next) => {
 //
 //             processResults(session, results)
 //                 .then(() => {
-//                         log.error(JSON.stringify(session.userData.form));
+//                         console.log(JSON.stringify(session.userData.form));
 //                         return post(session, 'ddl.ddlrecord/add-record',
 //                             {
 //                                 groupId: 20152,
@@ -364,7 +401,7 @@ try {
 //     const restify = require('restify');
 //     const server = restify.createServer();
 //     server.listen(3978, function () {
-//         log.error('test bot endpoint at http://localhost:3978/api/messages');
+//         console.log('test bot endpoint at http://localhost:3978/api/messages');
 //     });
 //     server.post('/api/messages', connector.listen());
 // } else {
@@ -386,7 +423,7 @@ try {
 //
 //             createPrompts(session, label, field);
 //         })
-//         .catch(err => log.error(err))
+//         .catch(err => console.log(err))
 // }
 //
 // function processResults(session, results) {
@@ -564,6 +601,7 @@ try {
 //     }
 //     return undefined;
 // }
+
 } catch (e) {
     log.error('ERROR' + JSON.stringify(e));
 }
