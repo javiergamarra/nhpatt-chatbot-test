@@ -8,13 +8,13 @@ const opts = {
 };
 const log = require('simple-node-logger').createRollingFileLogger( opts );
 
-log.error('1_');
+log.error('1.0');
+const rp = require('request-promise');
 
-var builder = require('botbuilder');
 log.error('1.1');
 const botbuilder_azure = require('botbuilder-azure');
 log.error('1.2');
-const rp = require('request-promise');
+var builder = require('botbuilder');
 log.error('1.3');
 const Promise1 = require('bluebird');
 log.error('1.4');
