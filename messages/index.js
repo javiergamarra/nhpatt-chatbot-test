@@ -8,7 +8,7 @@ const opts = {
 };
 const log = require('simple-node-logger').createRollingFileLogger( opts );
 
-log('1');
+log.error('1');
 
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
@@ -18,7 +18,7 @@ const locationDialog = require('botbuilder-location');
 const curl = require('request-to-curl');
 const path = require('path');
 
-log('2');
+log.error('2');
 
 const locale = 'es_ES';
 const localhost = process.env.NODE_ENV === 'localhost';
@@ -67,7 +67,7 @@ if (useEmulator) {
     var restify = require('restify');
     var server = restify.createServer();
     server.listen(3978, function() {
-        log('test bot endpont at http://localhost:3978/api/messages');
+        log.error('test bot endpont at http://localhost:3978/api/messages');
     });
     server.post('/api/messages', connector.listen());
 } else {
@@ -76,11 +76,11 @@ if (useEmulator) {
 
 
 
-// log('3');
+// log.error('3');
 //
 // const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
 //
-// log('4', useEmulator);
+// log.error('4', useEmulator);
 //
 // const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
 //     appId: process.env['MicrosoftAppId'],
@@ -88,7 +88,7 @@ if (useEmulator) {
 //     openIdMetadata: process.env['BotOpenIdMetadata']
 // });
 //
-// log('5');
+// log.error('5');
 //
 // const bot = new builder.UniversalBot(connector, {
 //     localizerSettings: {
@@ -97,7 +97,7 @@ if (useEmulator) {
 //     }
 // });
 //
-// log('6');
+// log.error('6');
 //
 
 // const tableName = 'botdata';
@@ -122,21 +122,21 @@ if (useEmulator) {
 //     }
 // ]);
 //
-// log('7');
+// log.error('7');
 //
 // const luisAppId = process.env.LuisAppId;
 // const luisAPIKey = process.env.LuisAPIKey;
 // const luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com'; //'westeurope.api.cognitive.microsoft.com';
 //
-// log('8');
+// log.error('8');
 //
 // const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '&subscription-key=' + luisAPIKey;
 //
-// log('9');
+// log.error('9');
 //
 // const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 //
-// log('10');
+// log.error('10');
 //
 // const intents = new builder.IntentDialog({recognizers: [recognizer]})
 //     .onBegin(function (session) {
@@ -230,14 +230,14 @@ if (useEmulator) {
 //                 })
 //                 .catch(err =>
 //                     // session.send(JSON.stringify(err))
-//                     log(err)
+//                     log.error(err)
 //                 )
 //         },
 //         (session, results, next) => {
 //
 //             processResults(session, results)
 //                 .then(() => {
-//                         log(JSON.stringify(session.userData.form));
+//                         log.error(JSON.stringify(session.userData.form));
 //                         return post(session, 'ddl.ddlrecord/add-record',
 //                             {
 //                                 groupId: 20152,
@@ -324,7 +324,7 @@ if (useEmulator) {
 //     const restify = require('restify');
 //     const server = restify.createServer();
 //     server.listen(3978, function () {
-//         log('test bot endpoint at http://localhost:3978/api/messages');
+//         log.error('test bot endpoint at http://localhost:3978/api/messages');
 //     });
 //     server.post('/api/messages', connector.listen());
 // } else {
@@ -346,7 +346,7 @@ if (useEmulator) {
 //
 //             createPrompts(session, label, field);
 //         })
-//         .catch(err => log(err))
+//         .catch(err => log.error(err))
 // }
 //
 // function processResults(session, results) {
