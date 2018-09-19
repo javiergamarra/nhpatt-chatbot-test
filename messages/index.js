@@ -1,6 +1,14 @@
 'use strict';
 
-console.log('1');
+const opts = {
+    errorEventName:'error',
+    logDirectory:'/',
+    fileNamePattern:'roll-<DATE>.log',
+    dateFormat:'YYYY.MM.DD'
+};
+const log = require('simple-node-logger').createRollingFileLogger( opts );
+
+log('1');
 
 const builder = require('botbuilder');
 const botbuilder_azure = require('botbuilder-azure');
@@ -8,19 +16,15 @@ const rp = require('request-promise');
 const Promise = require('bluebird');
 const locationDialog = require('botbuilder-location');
 const curl = require('request-to-curl');
+const path = require('path');
 
-console.log('2');
+log('2');
 
 const locale = 'es_ES';
 const localhost = process.env.NODE_ENV === 'localhost';
 const USERNAME = process.env.LIFERAY_USER;
 const PASSWORD = process.env.LIFERAY_PASSWORD;
 const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
-
-
-// var builder = require("botbuilder");
-// var botbuilder_azure = require("botbuilder-azure");
-var path = require('path');
 
 var useEmulator = (process.env.NODE_ENV == 'development');
 
@@ -30,19 +34,10 @@ var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure
     openIdMetadata: process.env['BotOpenIdMetadata']
 });
 
-/*----------------------------------------------------------------------------------------
-* Bot Storage: This is a great spot to register the private state storage for your bot.
-* We provide adapters for Azure Table, CosmosDb, SQL Azure, or you can implement your own!
-* For samples and documentation, see: https://github.com/Microsoft/BotBuilder-Azure
-* ---------------------------------------------------------------------------------------- */
-
 var tableName = 'botdata';
 var azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
 var tableStorage = new botbuilder_azure.AzureBotStorage({ gzipData: false }, azureTableClient);
 
-// Create your bot with a function to receive messages from the user
-// This default message handler is invoked if the user's utterance doesn't
-// match any intents handled by other dialogs.
 var bot = new builder.UniversalBot(connector, function (session, args) {
     session.send('You reached the default message handler. You said \'%s\'.', session.message.text);
 });
@@ -50,36 +45,14 @@ var bot = new builder.UniversalBot(connector, function (session, args) {
 bot.localePath(path.join(__dirname, './locale'));
 bot.set('storage', tableStorage);
 
-// Make sure you add code to validate these fields
 var luisAppId = process.env.LuisAppId;
 var luisAPIKey = process.env.LuisAPIKey;
 var luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com';
 
 const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '?subscription-key=' + luisAPIKey;
 
-// Create a recognizer that gets intents from LUIS, and add it to the bot
 var recognizer = new builder.LuisRecognizer(LuisModelUrl);
 bot.recognizer(recognizer);
-
-// Add a dialog for each intent that the LUIS app recognizes.
-// See https://docs.microsoft.com/en-us/bot-framework/nodejs/bot-builder-nodejs-recognize-intent-luis
-bot.dialog('GreetingDialog',
-    (session) => {
-        session.send('You reached the Greeting intent. You said \'%s\'.', session.message.text);
-        session.endDialog();
-    }
-).triggerAction({
-    matches: 'Greeting'
-})
-
-bot.dialog('HelpDialog',
-    (session) => {
-        session.send('You reached the Help intent. You said \'%s\'.', session.message.text);
-        session.endDialog();
-    }
-).triggerAction({
-    matches: 'Help'
-})
 
 bot.dialog('CancelDialog',
     (session) => {
@@ -88,13 +61,13 @@ bot.dialog('CancelDialog',
     }
 ).triggerAction({
     matches: 'Cancel'
-})
+});
 
 if (useEmulator) {
     var restify = require('restify');
     var server = restify.createServer();
     server.listen(3978, function() {
-        console.log('test bot endpont at http://localhost:3978/api/messages');
+        log('test bot endpont at http://localhost:3978/api/messages');
     });
     server.post('/api/messages', connector.listen());
 } else {
@@ -103,11 +76,11 @@ if (useEmulator) {
 
 
 
-// console.log('3');
+// log('3');
 //
 // const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
 //
-// console.log('4', useEmulator);
+// log('4', useEmulator);
 //
 // const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
 //     appId: process.env['MicrosoftAppId'],
@@ -115,7 +88,7 @@ if (useEmulator) {
 //     openIdMetadata: process.env['BotOpenIdMetadata']
 // });
 //
-// console.log('5');
+// log('5');
 //
 // const bot = new builder.UniversalBot(connector, {
 //     localizerSettings: {
@@ -124,49 +97,8 @@ if (useEmulator) {
 //     }
 // });
 //
-// console.log('6');
+// log('6');
 //
-// const path = require('path');
-//
-// var tableName = 'botdata';
-// var azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
-// var tableStorage = new botbuilder_azure.AzureBotStorage({ gzipData: false }, azureTableClient);
-//
-// bot.localePath(path.join(__dirname, './locale'));
-// bot.set('storage', tableStorage);
-//
-// // Make sure you add code to validate these fields
-// var luisAppId = process.env.LuisAppId;
-// var luisAPIKey = process.env.LuisAPIKey;
-// var luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com';
-//
-// const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '?subscription-key=' + luisAPIKey;
-//
-// var recognizer = new builder.LuisRecognizer(LuisModelUrl);
-// bot.recognizer(recognizer);
-//
-// bot.dialog('GreetingDialog',
-//     (session) => {
-//         session.send('You reached the Greeting intent. You said \'%s\'.', session.message.text);
-//         session.endDialog();
-//     }
-// ).triggerAction({
-//     matches: 'Greeting'
-// });
-//
-//
-// if (useEmulator) {
-//     var restify = require('restify');
-//     var server = restify.createServer();
-//     server.listen(3978, function() {
-//         console.log('test bot endpont at http://localhost:3978/api/messages');
-//     });
-//     server.post('/api/messages', connector.listen());
-// } else {
-//     module.exports = connector.listen();
-// }
-
-
 
 // const tableName = 'botdata';
 // const azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
@@ -190,21 +122,21 @@ if (useEmulator) {
 //     }
 // ]);
 //
-// console.log('7');
+// log('7');
 //
 // const luisAppId = process.env.LuisAppId;
 // const luisAPIKey = process.env.LuisAPIKey;
 // const luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com'; //'westeurope.api.cognitive.microsoft.com';
 //
-// console.log('8');
+// log('8');
 //
 // const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '&subscription-key=' + luisAPIKey;
 //
-// console.log('9');
+// log('9');
 //
 // const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 //
-// console.log('10');
+// log('10');
 //
 // const intents = new builder.IntentDialog({recognizers: [recognizer]})
 //     .onBegin(function (session) {
@@ -298,14 +230,14 @@ if (useEmulator) {
 //                 })
 //                 .catch(err =>
 //                     // session.send(JSON.stringify(err))
-//                     console.log(err)
+//                     log(err)
 //                 )
 //         },
 //         (session, results, next) => {
 //
 //             processResults(session, results)
 //                 .then(() => {
-//                         console.log(JSON.stringify(session.userData.form));
+//                         log(JSON.stringify(session.userData.form));
 //                         return post(session, 'ddl.ddlrecord/add-record',
 //                             {
 //                                 groupId: 20152,
@@ -392,7 +324,7 @@ if (useEmulator) {
 //     const restify = require('restify');
 //     const server = restify.createServer();
 //     server.listen(3978, function () {
-//         console.log('test bot endpoint at http://localhost:3978/api/messages');
+//         log('test bot endpoint at http://localhost:3978/api/messages');
 //     });
 //     server.post('/api/messages', connector.listen());
 // } else {
@@ -414,7 +346,7 @@ if (useEmulator) {
 //
 //             createPrompts(session, label, field);
 //         })
-//         .catch(err => console.log(err))
+//         .catch(err => log(err))
 // }
 //
 // function processResults(session, results) {
