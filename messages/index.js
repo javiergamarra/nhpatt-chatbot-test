@@ -2,12 +2,31 @@
 
 const opts = {
     errorEventName: 'error',
-    logDirectory: 'D:/home/site/wwwroot/messages/',
+    logDirectory: '',
     fileNamePattern: 'roll-<DATE>.log',
     dateFormat: 'YYYY.MM.DD'
 };
 try {
 
+    const winston = require('winston');
+
+    const logger1 = winston.createLogger({
+        level: 'info',
+        format: winston.format.json(),
+        transports: [
+            new winston.transports.File({ filename: 'D:/home/site/wwwroot/messages/error.log', level: 'error' }),
+        ]
+    });
+
+    logger1.log({
+        level: 'error',
+        message: 'Hello distributed log files!'
+    });
+
+    logger1.log({
+        level: 'error',
+        message: 'Hello distributed log files1212!'
+    });
 
     console.log('1');
 
@@ -18,7 +37,10 @@ try {
     const locationDialog = require('botbuilder-location');
     const curl = require('request-to-curl');
 
-    console.log('2');
+    logger1.log({
+        level: 'error',
+        message: '2!'
+    });
 
     const locale = 'es_ES';
     const localhost = process.env.NODE_ENV === 'localhost';
