@@ -6,12 +6,12 @@ const opts = {
     fileNamePattern: 'roll-<DATE>.log',
     dateFormat: 'YYYY.MM.DD'
 };
-const log = require('simple-node-logger').createRollingFileLogger(opts);
+const simpleLog = require('simple-node-logger').createRollingFileLogger(opts);
 
 try {
 
 
-    log.error('1');
+    simpleLog.error('1');
 
     const builder = require('botbuilder');
     const botbuilder_azure = require('botbuilder-azure');
@@ -20,7 +20,7 @@ try {
     const locationDialog = require('botbuilder-location');
     const curl = require('request-to-curl');
 
-    log.error('2');
+    simpleLog.error('2');
 
     const locale = 'es_ES';
     const localhost = process.env.NODE_ENV === 'localhost';
@@ -113,11 +113,11 @@ try {
     }
 
 
-// console.log('3');
+// console.simpleLog('3');
 //
 // const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
 //
-// console.log('4', useEmulator);
+// console.simpleLog('4', useEmulator);
 //
 // const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
 //     appId: process.env['MicrosoftAppId'],
@@ -125,7 +125,7 @@ try {
 //     openIdMetadata: process.env['BotOpenIdMetadata']
 // });
 //
-// console.log('5');
+// console.simpleLog('5');
 //
 // const bot = new builder.UniversalBot(connector, {
 //     localizerSettings: {
@@ -134,7 +134,7 @@ try {
 //     }
 // });
 //
-// console.log('6');
+// console.simpleLog('6');
 //
 // const path = require('path');
 //
@@ -169,7 +169,7 @@ try {
 //     var restify = require('restify');
 //     var server = restify.createServer();
 //     server.listen(3978, function() {
-//         console.log('test bot endpont at http://localhost:3978/api/messages');
+//         console.simpleLog('test bot endpont at http://localhost:3978/api/messages');
 //     });
 //     server.post('/api/messages', connector.listen());
 // } else {
@@ -199,21 +199,21 @@ try {
 //     }
 // ]);
 //
-// console.log('7');
+// console.simpleLog('7');
 //
 // const luisAppId = process.env.LuisAppId;
 // const luisAPIKey = process.env.LuisAPIKey;
 // const luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com'; //'westeurope.api.cognitive.microsoft.com';
 //
-// console.log('8');
+// console.simpleLog('8');
 //
 // const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '&subscription-key=' + luisAPIKey;
 //
-// console.log('9');
+// console.simpleLog('9');
 //
 // const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 //
-// console.log('10');
+// console.simpleLog('10');
 //
 // const intents = new builder.IntentDialog({recognizers: [recognizer]})
 //     .onBegin(function (session) {
@@ -307,14 +307,14 @@ try {
 //                 })
 //                 .catch(err =>
 //                     // session.send(JSON.stringify(err))
-//                     console.log(err)
+//                     console.simpleLog(err)
 //                 )
 //         },
 //         (session, results, next) => {
 //
 //             processResults(session, results)
 //                 .then(() => {
-//                         console.log(JSON.stringify(session.userData.form));
+//                         console.simpleLog(JSON.stringify(session.userData.form));
 //                         return post(session, 'ddl.ddlrecord/add-record',
 //                             {
 //                                 groupId: 20152,
@@ -401,7 +401,7 @@ try {
 //     const restify = require('restify');
 //     const server = restify.createServer();
 //     server.listen(3978, function () {
-//         console.log('test bot endpoint at http://localhost:3978/api/messages');
+//         console.simpleLog('test bot endpoint at http://localhost:3978/api/messages');
 //     });
 //     server.post('/api/messages', connector.listen());
 // } else {
@@ -423,7 +423,7 @@ try {
 //
 //             createPrompts(session, label, field);
 //         })
-//         .catch(err => console.log(err))
+//         .catch(err => console.simpleLog(err))
 // }
 //
 // function processResults(session, results) {
@@ -603,5 +603,5 @@ try {
 // }
 
 } catch (e) {
-    log.error('ERROR' + JSON.stringify(e));
+    simpleLog.error('ERROR' + JSON.stringify(e));
 }
