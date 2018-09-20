@@ -6,12 +6,10 @@ const opts = {
     fileNamePattern: 'roll-<DATE>.log',
     dateFormat: 'YYYY.MM.DD'
 };
-const simpleLog = require('simple-node-logger').createRollingFileLogger(opts);
-
 try {
 
 
-    simpleLog.error('1');
+    console.log('1');
 
     const builder = require('botbuilder');
     const botbuilder_azure = require('botbuilder-azure');
@@ -20,7 +18,7 @@ try {
     const locationDialog = require('botbuilder-location');
     const curl = require('request-to-curl');
 
-    simpleLog.error('2');
+    console.log('2');
 
     const locale = 'es_ES';
     const localhost = process.env.NODE_ENV === 'localhost';
@@ -113,11 +111,11 @@ try {
     }
 
 
-// console.simpleLog('3');
+// console.log('3');
 //
 // const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
 //
-// console.simpleLog('4', useEmulator);
+// console.log('4', useEmulator);
 //
 // const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
 //     appId: process.env['MicrosoftAppId'],
@@ -125,7 +123,7 @@ try {
 //     openIdMetadata: process.env['BotOpenIdMetadata']
 // });
 //
-// console.simpleLog('5');
+// console.log('5');
 //
 // const bot = new builder.UniversalBot(connector, {
 //     localizerSettings: {
@@ -134,7 +132,7 @@ try {
 //     }
 // });
 //
-// console.simpleLog('6');
+// console.log('6');
 //
 // const path = require('path');
 //
@@ -169,7 +167,7 @@ try {
 //     var restify = require('restify');
 //     var server = restify.createServer();
 //     server.listen(3978, function() {
-//         console.simpleLog('test bot endpont at http://localhost:3978/api/messages');
+//         console.log('test bot endpont at http://localhost:3978/api/messages');
 //     });
 //     server.post('/api/messages', connector.listen());
 // } else {
@@ -199,21 +197,21 @@ try {
 //     }
 // ]);
 //
-// console.simpleLog('7');
+// console.log('7');
 //
 // const luisAppId = process.env.LuisAppId;
 // const luisAPIKey = process.env.LuisAPIKey;
 // const luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com'; //'westeurope.api.cognitive.microsoft.com';
 //
-// console.simpleLog('8');
+// console.log('8');
 //
 // const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v2.0/apps/' + luisAppId + '&subscription-key=' + luisAPIKey;
 //
-// console.simpleLog('9');
+// console.log('9');
 //
 // const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 //
-// console.simpleLog('10');
+// console.log('10');
 //
 // const intents = new builder.IntentDialog({recognizers: [recognizer]})
 //     .onBegin(function (session) {
@@ -307,14 +305,14 @@ try {
 //                 })
 //                 .catch(err =>
 //                     // session.send(JSON.stringify(err))
-//                     console.simpleLog(err)
+//                     console.log(err)
 //                 )
 //         },
 //         (session, results, next) => {
 //
 //             processResults(session, results)
 //                 .then(() => {
-//                         console.simpleLog(JSON.stringify(session.userData.form));
+//                         console.log(JSON.stringify(session.userData.form));
 //                         return post(session, 'ddl.ddlrecord/add-record',
 //                             {
 //                                 groupId: 20152,
@@ -401,7 +399,7 @@ try {
 //     const restify = require('restify');
 //     const server = restify.createServer();
 //     server.listen(3978, function () {
-//         console.simpleLog('test bot endpoint at http://localhost:3978/api/messages');
+//         console.log('test bot endpoint at http://localhost:3978/api/messages');
 //     });
 //     server.post('/api/messages', connector.listen());
 // } else {
@@ -423,7 +421,7 @@ try {
 //
 //             createPrompts(session, label, field);
 //         })
-//         .catch(err => console.simpleLog(err))
+//         .catch(err => console.log(err))
 // }
 //
 // function processResults(session, results) {
@@ -603,5 +601,5 @@ try {
 // }
 
 } catch (e) {
-    simpleLog.error('ERROR' + JSON.stringify(e));
+    console.log('ERROR' + JSON.stringify(e));
 }
