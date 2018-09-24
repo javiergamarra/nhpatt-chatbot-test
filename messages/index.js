@@ -362,14 +362,14 @@ function processResults(session, results) {
             let fileName = file.name || (randomNumber + extension);
 
             const form = {
-                'repositoryId': LIFERAY_REPOSITORY_ID,
-                'folderId': LIFERAY_FOLDER_ID,
-                'sourceFileName': fileName,
-                'mimeType': file.contentType,
-                'title': fileName,
-                'description': '-',
-                'changeLog': '-',
-                'bytes': '[' + [...response].toString() + ']',
+                repositoryId: LIFERAY_REPOSITORY_ID,
+                folderId: LIFERAY_FOLDER_ID,
+                sourceFileName: fileName,
+                mimeType: file.contentType,
+                title: fileName,
+                description: '-',
+                changeLog: '-',
+                bytes: '[' + [...response].toString() + ']',
                 'serviceContext.scopeGroupId': LIFERAY_GROUP_ID,
                 'serviceContext.addGuestPermissions': true,
             };
@@ -439,7 +439,13 @@ function post(session, url, form) {
 
     logging.log({level: 'debug', message: `post... ${url}`});
 
-    const request = requestPromise.post(SERVER_URL + url, {form});
+    const request = requestPromise({
+        method: 'POST',
+        uri: SERVER_URL + url,
+        form: form,
+        headers: {}
+    });
+
     return request.auth(session.userData.username || DEFAULT_USERNAME, session.userData.password || DEFAULT_PASSWORD, true);
 }
 
