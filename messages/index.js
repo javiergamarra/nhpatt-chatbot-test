@@ -1,85 +1,135 @@
 'use strict';
 
+const winston = require('winston');
+
+const logging = winston.createLogger({
+    level: 'debug',
+    format: winston.format.json(),
+    transports: [
+        new winston.transports.File({filename: 'D:/home/site/wwwroot/debug.log', level: 'debug'}),
+    ]
+});
+
+logging.log({level: 'debug', message: 'Starting log...'});
+
 const builder = require('botbuilder');
-const botbuilder_azure = require('botbuilder-azure');
-const rp = require('request-promise');
-const Promise = require('bluebird');
+const botBuilderAzure = require('botbuilder-azure');
+const requestPromise = require('request-promise');
+const promise = require('bluebird');
 const locationDialog = require('botbuilder-location');
-require('request-to-curl');
+const path = require('path');
 
-const locale = 'es_ES';
-const localhost = process.env.NODE_ENV === 'localhost';
-const USERNAME = process.env.LIFERAY_USER;
-const PASSWORD = process.env.LIFERAY_PASSWORD;
-const host = (localhost ? 'http://localhost:8080' : process.env.URL) + '/api/jsonws/';
+const LOCALE = 'es_ES';
+const DEFAULT_USERNAME = process.env.LIFERAY_USER;
+const DEFAULT_PASSWORD = process.env.LIFERAY_PASSWORD;
+const LIFERAY_USER_PASSWORD = process.env.LIFERAY_USER_PASSWORD || process.env.USER_PASSWORD;
+const USE_EMULATOR = process.env.NODE_ENV === 'localhost';
+const SERVER_URL = (USE_EMULATOR ? 'http://localhost:8080/' : (process.env.LIFERAY_SERVER_URL || process.env.URL)) + 'api/jsonws/';
 
-const useEmulator = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'localhost';
+const LIFERAY_BING_KEY = process.env.LIFERAY_BING_KEY || process.env.BING_MAP;
 
-const connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
-    appId: process.env['MicrosoftAppId'],
-    appPassword: process.env['MicrosoftAppPassword'],
-    openIdMetadata: process.env['BotOpenIdMetadata']
+const LIFERAY_STRUCTURE_ID = process.env.LIFERAY_STRUCTURE_ID || 157436;
+const LIFERAY_GROUP_ID = process.env.LIFERAY_GROUP_ID || 20152;
+const LIFERAY_RECORD_SET_ID = process.env.LIFERAY_RECORD_SET_ID || 271054;
+const LIFERAY_REPOSITORY_ID = process.env.LIFERAY_REPOSITORY_ID || (LIFERAY_GROUP_ID || 20152);
+const LIFERAY_FOLDER_ID = process.env.LIFERAY_FOLDER_ID || 184528;
+
+logging.log({
+    level: 'debug', message: `Environment variables: ${
+        JSON.stringify({
+            LIFERAY_STRUCTURE_ID,
+            LIFERAY_GROUP_ID,
+            LIFERAY_RECORD_SET_ID,
+            LIFERAY_REPOSITORY_ID,
+            LIFERAY_FOLDER_ID
+        })
+        }`
 });
 
-const bot = new builder.UniversalBot(connector, {
-    localizerSettings: {
-        defaultLocale: 'es',
-        botLocalePath: './locale'
-    }
-});
+try {
 
-// const tableName = 'botdata';
-// const azureTableClient = new botbuilder_azure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
-// const tableStorage = new botbuilder_azure.AzureBotStorage({gzipData: false}, azureTableClient);
-// bot.set('storage', tableStorage);
+    logging.log({
+        level: 'debug',
+        message: `Dependencies ready with host ${SERVER_URL} and using emulator ${USE_EMULATOR}`
+    });
 
-const lib = locationDialog.createLibrary(process.env.BING_MAP || '');
-bot.library(lib);
+    const connector = USE_EMULATOR ? new builder.ChatConnector() : new botBuilderAzure.BotServiceConnector({
+        appId: process.env['MicrosoftAppId'],
+        appPassword: process.env['MicrosoftAppPassword'],
+        openIdMetadata: process.env['BotOpenIdMetadata']
+    });
 
-bot.dialog('survey', [
-    (session) => {
-        setTimeout(() => builder.Prompts.number(session, 'No me gustaría que me hiciesen chatarra! 😯 ' +
-            '¿me ayudas con una buena valoración? ' +
-            'Del 1 al 5, siendo 1 muy poco satisfecho 😞 y 5 muuuuy satisfecho 😊'), 3000);
-    },
-    (session, results, next) => {
-        session.userData.valoration = results.response;
-        let review = results.response < 3 ? '😞' : '😊';
-        session.send(review + ' Muchas gracias!');
-        next();
-    }
-]);
+    logging.log({level: 'debug', message: `Connector initialized...`});
 
-const luisAppId = process.env.LuisAppId;
-const luisAPIKey = process.env.LuisAPIKey;
-const luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com'; //'westeurope.api.cognitive.microsoft.com';
+    const bot = new builder.UniversalBot(connector,
+        {
+            localizerSettings: {
+                defaultLocale: 'es',
+                botLocalePath: './locale'
+            }
+        }
+    );
 
-const LuisModelUrl = 'https://' + luisAPIHostName + '/luis/v1/application?id=' + luisAppId + '&subscription-key=' + luisAPIKey;
+    logging.log({level: 'debug', message: `Bot initialized...`});
 
-const recognizer = new builder.LuisRecognizer(LuisModelUrl);
+    const tableName = 'botdata';
+    const azureTableClient = new botBuilderAzure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
+    const tableStorage = new botBuilderAzure.AzureBotStorage({gzipData: false}, azureTableClient);
+    bot.set('storage', tableStorage);
 
-const intents = new builder.IntentDialog({recognizers: [recognizer]})
-    .onBegin(function (session) {
+    bot.localePath(path.join(__dirname, './locale'));
+
+    const mapLibrary = locationDialog.createLibrary(LIFERAY_BING_KEY || '');
+    mapLibrary.dialog('confirm-dialog', createDialog(), true);
+    bot.library(mapLibrary);
+
+
+    bot.dialog('survey', [
+        session => {
+
+            logging.log({level: 'debug', message: 'Survey...'});
+
+            setTimeout(() => builder.Prompts.number(session, 'No me gustaría que me hiciesen chatarra! 😯 ' +
+                '¿me ayudas con una buena valoración? ' +
+                'Del 1 al 5, siendo 1 muy poco satisfecho 😞 y 5 muuuuy satisfecho 😊'), 3000);
+        },
+        (session, results, next) => {
+
+            logging.log({level: 'debug', message: 'Thanks...'});
+
+            session.userData.valoration = results.response;
+            let review = results.response < 3 ? '😞' : '😊';
+            session.send(review + ' Muchas gracias!');
+            next();
+        }
+    ]);
+
+    logging.log({level: 'debug', message: `First dialog...`});
+
+    const LUIS_APP_ID = process.env.LuisAppId;
+    const LUIS_API_KEY = process.env.LuisAPIKey;
+    const LUIS_API_HOSTNAME = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com';
+    const LUIS_API_URL = 'https://' + LUIS_API_HOSTNAME + '/luis/v2.0/apps/' + LUIS_APP_ID + '?subscription-key=' + LUIS_API_KEY;
+
+    const recognizer = new builder.LuisRecognizer(LUIS_API_URL);
+
+    logging.log({level: 'debug', message: `LUIS settings... ${LUIS_API_URL}`});
+
+    const intents = new builder.IntentDialog({recognizers: [recognizer]}).onBegin(session => {
+
+        logging.log({level: 'debug', message: 'Hi!...'});
 
         session.conversationData.name = '';
 
         tryToLogin(session);
 
-        session.send(
-            [
-                'Te damos la bienvenida a Liferay Mutual! ¿Cómo puedo ayudarte?',
-                'Hola! ¿Cómo puedo ayudarte?',
-            ]
-        );
+        session.send(['Te damos la bienvenida a Liferay Mutual! ¿Cómo puedo ayudarte?', 'Hola! ¿Cómo puedo ayudarte?',]);
 
-        session.preferredLocale('es', function (err) {
-            if (err) {
-                session.error(err);
-            }
-        });
-    })
-    .matches('Greeting', [
+        session.preferredLocale('es', err => logging.log({level: 'debug', message: JSON.stringify(err)}));
+    }).matches('Greeting', [
         (session, results, next) => {
+
+            logging.log({level: 'debug', message: 'Greeting!...'});
 
             if (session.conversationData.name) {
                 next();
@@ -101,12 +151,12 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             session.send('A día de hoy, te puedo decir que seguros puedes contratar o dar un parte');
 
-        }])
-    .matches('Help', (session) => {
-        session.send('Has pedido ayuda... \'%s\'.', session.message.text);
-    })
-    .matches('Parte', [
+        }]
+    ).matches('Help', session => session.send('Has pedido ayuda... \'%s\'.', session.message.text)
+    ).matches('Parte', [
         (session, results, next) => {
+
+            logging.log({level: 'debug', message: 'Parte...'});
 
             if (results.entities && results.entities.length) {
                 session.send('Ok, entendido, un parte de %s', results.entities[0].entity);
@@ -115,82 +165,80 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
                 builder.Prompts.text(session, '¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?');
             }
         },
-        (session) => {
+        session => {
             builder.Prompts.confirm(session, '¿Has tenido un accidente de tráfico?');
         },
         (session, results) => {
 
+            logging.log({level: 'debug', message: 'Encuesta...'});
 
             session.send('Ok, no te preocupes de nada, en un par de minutos habremos acabado. 😉');
             session.send('Vamos a hacerte una serie de preguntas para poder ayudarte mejor');
 
             session.userData.type = results.response;
 
-            post(session, 'ddm.ddmstructure/get-structure', {'structureId': 157436})
-                .then(response => {
-                    const message = JSON.parse(response);
-                    return JSON.parse(message.definition);
-                })
-                .then(function (result) {
+            post(session, 'ddm.ddmstructure/get-structure', {'structureId': LIFERAY_STRUCTURE_ID}).then(response => {
+                const message = JSON.parse(response);
+                return JSON.parse(message.definition);
+            }).then(function (result) {
 
-                    // session.send(JSON.stringify(result));
+                logging.log({level: 'debug', message: 'Result of getting structure...'});
+                logging.log({level: 'debug', message: JSON.stringify(result)});
 
-                    let random = '' + Math.random();
-                    let numberOfFields = result.fields.length;
+                let random = '' + Math.random();
+                let numberOfFields = result.fields.length;
 
-                    session.userData.form = {};
+                session.userData.form = {};
 
-                    let dialogs = result.fields.map(field =>
-                        (session, results, next) => createAndProcessFields(session, results, next, numberOfFields, field)
-                    );
+                let dialogs = result.fields.map(field =>
+                    (session, results, next) => createAndProcessFields(session, results, next, numberOfFields, field)
+                );
 
-                    bot.dialog(random, dialogs);
+                bot.dialog(random, dialogs);
 
-                    session.beginDialog(random);
-                })
-                .catch(err =>
-                    // session.send(JSON.stringify(err))
-                    console.log(err)
-                )
+                session.beginDialog(random);
+            }).catch(err =>
+                logging.log({level: 'debug', message: JSON.stringify(err)})
+            )
         },
         (session, results, next) => {
 
-            processResults(session, results)
-                .then(() => {
-                        console.log(JSON.stringify(session.userData.form));
-                        return post(session, 'ddl.ddlrecord/add-record',
-                            {
-                                groupId: 20152,
-                                recordSetId: 157439,
-                                // recordSetId: 271054,
-                                displayIndex: 0,
-                                fieldsMap: JSON.stringify(session.userData.form)
-                            }
-                        )
+            processResults(session, results).then(() => {
+                logging.log({level: 'debug', message: 'Sending record...'});
+                logging.log({level: 'debug', message: JSON.stringify(session.userData.form)});
+                return post(session, 'ddl.ddlrecord/add-record',
+                    {
+                        groupId: LIFERAY_GROUP_ID,
+                        recordSetId: LIFERAY_RECORD_SET_ID,
+                        displayIndex: 0,
+                        fieldsMap: JSON.stringify(session.userData.form)
                     }
                 )
-                .then(() => {
-                    session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.conversationData.name);
+            }).then(() => {
 
-                    timeout(session,
-                        'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el ' +
-                        'acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web' +
-                        ' o desde app, en el apartado de "Incidences".', 2000);
+                logging.log({level: 'debug', message: 'Fin!'});
 
-                    timeout(session, [
-                        'Recuerda que para cualquier duda estamos disponibles en el teléfono 666999999.',
-                        'Si necesitas comunicar con nosotros durante la espara estamos disponibles en el teléfono 666999999 para cualquier consulta que requieras.',
-                        'Recuerda instalarte nuestra app!'
-                    ], 4000);
+                session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.conversationData.name);
 
-                    let random = Math.random();
+                timeout(session,
+                    'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el ' +
+                    'acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web' +
+                    ' o desde app, en el apartado de "Incidences".', 2000);
 
-                    if (random > 0.5) {
-                        setTimeout(() => session.beginDialog('survey'), 5000);
-                    } else {
-                        next();
-                    }
-                });
+                timeout(session, [
+                    'Recuerda que para cualquier duda estamos disponibles en el teléfono 666999999.',
+                    'Si necesitas comunicar con nosotros durante la espara estamos disponibles en el teléfono 666999999 para cualquier consulta que requieras.',
+                    'Recuerda instalarte nuestra app!'
+                ], 4000);
+
+                let random = Math.random();
+
+                if (random > 0.5) {
+                    setTimeout(() => session.beginDialog('survey'), 5000);
+                } else {
+                    next();
+                }
+            });
         },
         (session, results, next) => {
 
@@ -199,13 +247,14 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             next();
         }
-    ])
-    .matches('Seguros', [
+    ]).matches('Seguros', [
         (session) => {
+
+            logging.log({level: 'debug', message: 'Seguros...'});
 
             timeout(session, 'Me alegra que me hagas esa pregunta, tenemos los mejores seguros de coches del mercado.', 1000);
             timeout(session, 'Disponemos de cuatro tipos de seguro de coche: Todo riesgo, a terceros, con franquicia y para coches clásicos.', 3000);
-            timeout(session, 'Esta es la página donde podrás encontrar toda la información: http://liferay-gs.liferay.org.es/web/liferay-mutual/car-insurance/third-party-insurance', 5000);
+            timeout(session, 'Esta es la página donde podrás encontrar toda la información: https://liferay-insurances-demo.liferay.org.es/web/liferay-mutual/car-insurance/third-party-insurance', 5000);
 
             setTimeout(() => builder.Prompts.choice(session, 'Has encontrado algo que cuadre con lo que buscas?', ['Si', 'No']), 7000);
         },
@@ -219,66 +268,75 @@ const intents = new builder.IntentDialog({recognizers: [recognizer]})
 
             setTimeout(() => session.beginDialog('survey'), 2000);
         },
-    ])
-    .matches('Cancel', (session) => {
+    ]).matches('Cancel', (session) => {
         session.send('You reached Cancel intent, you said \'%s\'.', session.message.text);
         session.conversationData = {};
-    })
-    .onDefault((session) => {
-        session.send('Sorry, I did not understand \'%s\'.', session.message.text);
+    }).onDefault(session => session.send('Sorry, I did not understand \'%s\'.', session.message.text));
+
+    logging.log({level: 'debug', message: `Dialogs initialized...`});
+
+    bot.dialog('/', intents);
+
+    bot.on('conversationUpdate', function (message) {
+        if (message.membersAdded) {
+            message.membersAdded.forEach(function (identity) {
+                if (identity.id === message.address.bot.id) {
+                    bot.beginDialog(message.address, '/');
+                }
+            });
+        }
     });
 
-bot.dialog('/', intents);
+    logging.log({level: 'debug', message: `Ready...`});
 
-bot.on('conversationUpdate', function (message) {
-    if (message.membersAdded) {
-        message.membersAdded.forEach(function (identity) {
-            if (identity.id === message.address.bot.id) {
-                bot.beginDialog(message.address, '/');
-            }
+    if (USE_EMULATOR) {
+        const restify = require('restify');
+        const server = restify.createServer();
+        server.listen(3978, function () {
+            console.log('test bot endpoint at http://localhost:3978/api/messages');
         });
+        server.post('/api/messages', connector.listen());
+    } else {
+        module.exports = connector.listen();
     }
-});
 
-if (useEmulator) {
-    const restify = require('restify');
-    const server = restify.createServer();
-    server.listen(3978, function () {
-        console.log('test bot endpoint at http://localhost:3978/api/messages');
-    });
-    server.post('/api/messages', connector.listen());
-} else {
-    module.exports = connector.listen();
+    logging.log({level: 'debug', message: `Go!...`});
+
+} catch (e) {
+    logging.log({level: 'debug', message: 'Error :(' + JSON.stringify(e)});
 }
 
 function createAndProcessFields(session, results, next, numberOfFields, field) {
 
-    processResults(session, results)
-        .then(() => {
-            const userData = session.userData;
+    processResults(session, results).then(() => {
 
-            const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
+        const userData = session.userData;
 
-            const label = dialogDatum + '/' + numberOfFields + ' - ' + field.label[locale];
-            writeEncouragingMessages(dialogDatum, session);
+        const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
 
-            userData.lastField = field;
+        const label = dialogDatum + '/' + numberOfFields + ' - ' + field.label[LOCALE];
+        writeEncouragingMessages(dialogDatum, session);
 
-            createPrompts(session, label, field);
-        })
-        .catch(err => console.log(err))
+        userData.lastField = field;
+
+        createPrompts(session, label, field);
+
+    }).catch(err => logging.log({level: 'debug', message: JSON.stringify(err)}))
 }
 
 function processResults(session, results) {
 
     const userData = session.userData;
     if (!results || !results.response || !userData.lastField) {
-        return Promise.resolve();
+        return promise.resolve();
     }
 
     const lastField = userData.lastField.name;
 
     const response = results.response;
+
+    logging.log({level: 'debug', message: 'Parsing fields...'});
+    logging.log({level: 'debug', message: JSON.stringify(response)});
 
     if (response.geo) {
         userData.form[lastField] = '{\"latitude\":' + response.geo.latitude + ', \"longitude\":' + response.geo.longitude + '}';
@@ -286,45 +344,64 @@ function processResults(session, results) {
         const d = response.resolution.start;
         userData.form[lastField] = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
     } else if (response.entity) {
-        userData.form[lastField] = '[\"' + userData.lastField.options.filter(x => x.label[locale] === response.entity)[0].value + '\"]';
+        userData.form[lastField] = '[\"' + userData.lastField.options.filter(x => x.label[LOCALE] === response.entity)[0].value + '\"]';
     } else if (Array.isArray(response)) {
 
         const file = response[0];
 
-        return rp({encoding: null, uri: file.contentUrl})
-            .then(function (response) {
-                // session.send(JSON.stringify(file));
-                const randomNumber = ('' + Math.random()).substr(2);
+        return requestPromise({encoding: null, uri: file.contentUrl}).then(function (response) {
 
-                let extension = file.contentType === 'image/png' ? '.png' :
-                    file.contentType === 'image/jpg' ? 'jpg' : 'application/octet-stream';
+            logging.log({level: 'debug', message: 'Retrieving file...'});
+            logging.log({level: 'debug', message: JSON.stringify(file)});
 
-                let fileName = file.name || (randomNumber + extension);
+            const randomNumber = ('' + Math.random()).substr(2);
 
-                return post(session, 'dlapp/add-file-entry', {
-                    'repositoryId': 20152,
-                    'folderId': 184570,
-                    'sourceFileName': fileName,
-                    'mimeType': file.contentType,
-                    'title': fileName,
-                    'description': '-',
-                    'changeLog': '-',
-                    'bytes': '[' + [...response].toString() + ']',
-                })
-            })
-            .then(function (response) {
-                const obj = JSON.parse(response);
-                userData.form[userData.lastField.name] = '{' +
-                    '"groupId":20152,' +
-                    '"uuid":"' + obj.uuid + '",' +
-                    '"version":1.0,' +
-                    '"folderId":184570,' +
-                    '"title":"' + obj.fileName + '"}';
+            let extension = file.contentType === 'image/png' ? '.png' :
+                file.contentType === 'image/jpg' ? 'jpg' : 'application/octet-stream';
+
+            let fileName = file.name || (randomNumber + extension);
+
+            const form = {
+                repositoryId: LIFERAY_REPOSITORY_ID,
+                folderId: LIFERAY_FOLDER_ID,
+                sourceFileName: fileName,
+                mimeType: file.contentType,
+                title: fileName,
+                description: '-',
+                changeLog: '-',
+                bytes: '[' + [...response].toString() + ']',
+                'serviceContext.scopeGroupId': LIFERAY_GROUP_ID,
+                'serviceContext.addGuestPermissions': true,
+            };
+
+            logging.log({level: 'debug', message: 'Adding file...'});
+            logging.log({level: 'debug', message: JSON.stringify(form)});
+
+            return post(session, 'dlapp/add-file-entry', form)
+        }).then(function (response) {
+
+            const obj = JSON.parse(response);
+
+            logging.log({level: 'debug', message: 'Parsing file response...'});
+            logging.log({level: 'debug', message: JSON.stringify(obj)});
+
+            userData.form[userData.lastField.name] = JSON.stringify({
+                groupId: LIFERAY_GROUP_ID,
+                uuid: obj.uuid,
+                version: '1.0',
+                folderId: LIFERAY_FOLDER_ID,
+                title: obj.fileName
             });
+
+            logging.log({level: 'debug', message: 'Linking file...'});
+            logging.log({level: 'debug', message: JSON.stringify(userData)});
+        }).catch(
+            err => logging.log({level: 'debug', message: JSON.stringify(err)})
+        );
     } else {
         userData.form[lastField] = response;
     }
-    return Promise.resolve();
+    return promise.resolve();
 }
 
 function writeEncouragingMessages(dialogDatum, session) {
@@ -345,7 +422,7 @@ function writeEncouragingMessages(dialogDatum, session) {
 
 function createPrompts(session, label, field) {
     if ('select' === (field.type)) {
-        let choices = field.options.map(x => x.label[locale]);
+        let choices = field.options.map(x => x.label[LOCALE]);
         const choiceSynonyms = [
             {value: 'Sí', synonyms: ['Si', 'Sí', 'Yes']},
             {value: 'No', synonyms: ['No', 'Nop']}
@@ -368,31 +445,35 @@ function createPrompts(session, label, field) {
 
 function post(session, url, form) {
 
-    let post1 = rp.post(host + url, {form});
+    logging.log({level: 'debug', message: `post... ${url}`});
 
-    // session.send(JSON.stringify(session.userData));
+    const request = requestPromise({
+        method: 'POST',
+        uri: SERVER_URL + url,
+        form: form,
+        headers: {}
+    });
 
-    if (session.userData && session.userData.username) {
-        return post1.auth(session.userData.username, session.userData.password, true);
-    } else {
-        return post1.auth(USERNAME, PASSWORD, true);
-    }
+    return request.auth(session.userData.username || DEFAULT_USERNAME, session.userData.password || DEFAULT_PASSWORD, true);
 }
 
 function tryToLogin(session) {
-    let message = session.message;
+    const message = session.message;
 
-    // session.send('Intentando loguear...');
-    // session.send(session.message);
+    logging.log({level: 'debug', message: 'Trying login...'});
+    logging.log({level: 'debug', message: JSON.stringify(message)});
 
     if (message && message.text && message.text.indexOf('start') !== -1) {
         session.userData.username = message.text.replace('/start ', '');
-        session.userData.password = process.env.USER_PASSWORD;
+        session.userData.password = LIFERAY_USER_PASSWORD;
         session.sendTyping();
     }
 }
 
 function timeout(session, message, delay) {
+
+    logging.log({level: 'debug', message: `delay`});
+
     session.sendTyping();
     setTimeout(() => {
         session.send(message);
@@ -400,36 +481,29 @@ function timeout(session, message, delay) {
     }, delay);
 }
 
-lib.dialog('confirm-dialog', createDialog(), true);
-
 function createDialog() {
-    return createBaseDialog()
-        .onBegin(function (session, args) {
-            const confirmationPrompt = args.confirmationPrompt;
-            session.send(confirmationPrompt).sendBatch();
-        })
-        .onDefault(function (session) {
-            const message = parseBoolean(session.message.text);
-            if (typeof message === 'boolean') {
-                session.endDialogWithResult({response: {confirmed: message}});
-                return;
-            }
-            session.send('InvalidYesNo').sendBatch();
-        });
+    return createBaseDialog().onBegin(function (session, args) {
+        const confirmationPrompt = args.confirmationPrompt;
+        session.send(confirmationPrompt).sendBatch();
+    }).onDefault(function (session) {
+        const message = parseBoolean(session.message.text);
+        if (typeof message === 'boolean') {
+            session.endDialogWithResult({response: {confirmed: message}});
+            return;
+        }
+        session.send('InvalidYesNo').sendBatch();
+    });
 }
 
 function createBaseDialog(options) {
-    return new builder.IntentDialog(options)
-        .matches(/^cancel$/i, function (session) {
-            session.send(consts_1.Strings.CancelPrompt);
-            session.endDialogWithResult({response: {cancel: true}});
-        })
-        .matches(/^help$/i, function (session) {
-            session.send(consts_1.Strings.HelpMessage).sendBatch();
-        })
-        .matches(/^reset$/i, function (session) {
-            session.endDialogWithResult({response: {reset: true}});
-        });
+    return new builder.IntentDialog(options).matches(/^cancel$/i, function (session) {
+        session.send(consts_1.Strings.CancelPrompt);
+        session.endDialogWithResult({response: {cancel: true}});
+    }).matches(/^help$/i, function (session) {
+        session.send(consts_1.Strings.HelpMessage).sendBatch();
+    }).matches(/^reset$/i, function (session) {
+        session.endDialogWithResult({response: {reset: true}});
+    });
 }
 
 function parseBoolean(input) {
@@ -438,8 +512,7 @@ function parseBoolean(input) {
     const noExp = /^(n|no|nope|not|false)/i;
     if (yesExp.test(input)) {
         return true;
-    }
-    else if (noExp.test(input)) {
+    } else if (noExp.test(input)) {
         return false;
     }
     return undefined;
