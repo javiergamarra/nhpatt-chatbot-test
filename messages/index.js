@@ -370,7 +370,6 @@ function processResults(session, results) {
                 'description': '-',
                 'changeLog': '-',
                 'bytes': '[' + [...response].toString() + ']',
-                '+serviceContext': 'com.liferay.portal.service.ServiceContext',
                 'serviceContext.scopeGroupId': LIFERAY_GROUP_ID,
                 'serviceContext.addGuestPermissions': true,
             };
