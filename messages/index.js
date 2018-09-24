@@ -22,8 +22,29 @@ const path = require('path');
 const LOCALE = 'es_ES';
 const DEFAULT_USERNAME = process.env.LIFERAY_USER;
 const DEFAULT_PASSWORD = process.env.LIFERAY_PASSWORD;
+const LIFERAY_USER_PASSWORD = process.env.LIFERAY_USER_PASSWORD || process.env.USER_PASSWORD;
 const USE_EMULATOR = process.env.NODE_ENV === 'localhost';
-const SERVER_URL = (USE_EMULATOR ? 'http://localhost:8080/' : process.env.URL) + 'api/jsonws/';
+const SERVER_URL = (USE_EMULATOR ? 'http://localhost:8080/' : (process.env.LIFERAY_SERVER_URL || process.env.URL)) + 'api/jsonws/';
+
+const LIFERAY_BING_KEY = process.env.LIFERAY_BING_KEY || process.env.BING_MAP;
+
+const LIFERAY_STRUCTURE_ID = process.env.LIFERAY_STRUCTURE_ID || 271050;
+const LIFERAY_GROUP_ID = process.env.LIFERAY_GROUP_ID || 20152;
+const LIFERAY_RECORD_SET_ID = process.env.LIFERAY_RECORD_SET_ID || 271054;
+const LIFERAY_REPOSITORY_ID = process.env.LIFERAY_REPOSITORY_ID || (LIFERAY_GROUP_ID || 20152);
+const LIFERAY_FOLDER_ID = process.env.LIFERAY_FOLDER_ID || 184528;
+
+logging.log({
+    level: 'debug', message: `Environment variables: ${
+        JSON.stringify({
+            LIFERAY_STRUCTURE_ID,
+            LIFERAY_GROUP_ID,
+            LIFERAY_RECORD_SET_ID,
+            LIFERAY_REPOSITORY_ID,
+            LIFERAY_FOLDER_ID
+        })
+        }`
+});
 
 try {
 
@@ -54,10 +75,11 @@ try {
     const tableName = 'botdata';
     const azureTableClient = new botBuilderAzure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
     const tableStorage = new botBuilderAzure.AzureBotStorage({gzipData: false}, azureTableClient);
-    bot.localePath(path.join(__dirname, './locale'));
     bot.set('storage', tableStorage);
 
-    const mapLibrary = locationDialog.createLibrary(process.env.BING_MAP || '');
+    bot.localePath(path.join(__dirname, './locale'));
+
+    const mapLibrary = locationDialog.createLibrary(LIFERAY_BING_KEY || '');
     mapLibrary.dialog('confirm-dialog', createDialog(), true);
     bot.library(mapLibrary);
 
@@ -146,7 +168,7 @@ try {
 
             session.userData.type = results.response;
 
-            post(session, 'ddm.ddmstructure/get-structure', {'structureId': 271050}).then(response => {
+            post(session, 'ddm.ddmstructure/get-structure', {'structureId': LIFERAY_STRUCTURE_ID}).then(response => {
                 const message = JSON.parse(response);
                 return JSON.parse(message.definition);
             }).then(function (result) {
@@ -175,8 +197,8 @@ try {
                 logging.log({level: 'debug', message: JSON.stringify(session.userData.form)});
                 return post(session, 'ddl.ddlrecord/add-record',
                     {
-                        groupId: 20152,
-                        recordSetId: 271054,
+                        groupId: LIFERAY_GROUP_ID,
+                        recordSetId: LIFERAY_RECORD_SET_ID,
                         displayIndex: 0,
                         fieldsMap: JSON.stringify(session.userData.form)
                     }
@@ -317,23 +339,30 @@ function processResults(session, results) {
 
             let fileName = file.name || (randomNumber + extension);
 
+            const serviceContext = {
+                // "userId": __,
+                'scopeGroupId': LIFERAY_GROUP_ID,
+                'addGuestPermissions': true
+            };
+
             return post(session, 'dlapp/add-file-entry', {
-                'repositoryId': 20152,
-                'folderId': 184528,
+                'repositoryId': LIFERAY_REPOSITORY_ID,
+                'folderId': LIFERAY_FOLDER_ID,
                 'sourceFileName': fileName,
                 'mimeType': file.contentType,
                 'title': fileName,
                 'description': '-',
                 'changeLog': '-',
                 'bytes': '[' + [...response].toString() + ']',
+                'serviceContext': JSON.stringify(serviceContext)
             })
         }).then(function (response) {
             const obj = JSON.parse(response);
             userData.form[userData.lastField.name] = '{' +
-                '"groupId":20152,' +
+                `"groupId":${LIFERAY_GROUP_ID},` +
                 '"uuid":"' + obj.uuid + '",' +
                 '"version":1.0,' +
-                '"folderId":184528,' +
+                `folderId":${LIFERAY_FOLDER_ID},'` +
                 '"title":"' + obj.fileName + '"}';
         });
     } else {
@@ -396,7 +425,7 @@ function tryToLogin(session) {
 
     if (message && message.text && message.text.indexOf('start') !== -1) {
         session.userData.username = message.text.replace('/start ', '');
-        session.userData.password = process.env.USER_PASSWORD;
+        session.userData.password = LIFERAY_USER_PASSWORD;
         session.sendTyping();
     }
 }
