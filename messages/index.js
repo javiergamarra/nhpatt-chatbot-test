@@ -81,9 +81,9 @@ try {
     const LUIS_API_HOSTNAME = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com';
     const LUIS_API_URL = 'https://' + LUIS_API_HOSTNAME + '/luis/v2.0/apps/' + LUIS_APP_ID + '&subscription-key=' + LUIS_API_KEY;
 
-    logging.log({level: 'debug', message: `LUIS settings...`});
-
     const recognizer = new builder.LuisRecognizer(LUIS_API_URL);
+
+    logging.log({level: 'debug', message: `LUIS settings...`});
 
     const intents = new builder.IntentDialog({recognizers: [recognizer]}).onBegin(session => {
 
@@ -93,12 +93,7 @@ try {
 
         logging.log({level: 'debug', message: 'Hi!...'});
 
-        session.send(
-            [
-                'Te damos la bienvenida a Liferay Mutual! ¿Cómo puedo ayudarte?',
-                'Hola! ¿Cómo puedo ayudarte?',
-            ]
-        );
+        session.send(['Te damos la bienvenida a Liferay Mutual! ¿Cómo puedo ayudarte?', 'Hola! ¿Cómo puedo ayudarte?',]);
 
         session.preferredLocale('es', function (err) {
             if (err) {
@@ -107,6 +102,8 @@ try {
         });
     }).matches('Greeting', [
         (session, results, next) => {
+
+            logging.log({level: 'debug', message: 'Greeting!...'});
 
             if (session.conversationData.name) {
                 next();
@@ -242,6 +239,8 @@ try {
         session.send('Sorry, I did not understand \'%s\'.', session.message.text);
     });
 
+    logging.log({level: 'debug', message: `Dialogs initialized...`});
+
     bot.dialog('/', intents);
 
     bot.on('conversationUpdate', function (message) {
@@ -254,6 +253,8 @@ try {
         }
     });
 
+    logging.log({level: 'debug', message: `Ready...`});
+
     if (USE_EMULATOR) {
         const restify = require('restify');
         const server = restify.createServer();
@@ -264,6 +265,8 @@ try {
     } else {
         module.exports = connector.listen();
     }
+
+    logging.log({level: 'debug', message: `Go!...`});
 
 } catch (e) {
     logging.log({level: 'debug', message: 'Error :(' + JSON.stringify(e)});
