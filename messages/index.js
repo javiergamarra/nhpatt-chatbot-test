@@ -379,17 +379,25 @@ function processResults(session, results) {
 
             return post(session, 'dlapp/add-file-entry', form)
         }).then(function (response) {
+
             const obj = JSON.parse(response);
-            userData.form[userData.lastField.name] = '{' +
-                `"groupId":${LIFERAY_GROUP_ID},` +
-                '"uuid":"' + obj.uuid + '",' +
-                '"version":1.0,' +
-                `folderId":${LIFERAY_FOLDER_ID},'` +
-                '"title":"' + obj.fileName + '"}';
+
+            logging.log({level: 'debug', message: 'Parsing file response...'});
+            logging.log({level: 'debug', message: JSON.stringify(obj)});
+
+            userData.form[userData.lastField.name] = JSON.stringify({
+                groupId: LIFERAY_GROUP_ID,
+                uuid: obj.uuid,
+                version: '1.0',
+                folderId: LIFERAY_FOLDER_ID,
+                title: obj.fileName
+            });
 
             logging.log({level: 'debug', message: 'Linking file...'});
             logging.log({level: 'debug', message: JSON.stringify(userData)});
-        });
+        }).catch(
+            err => logging.log({level: 'debug', message: JSON.stringify(err)})
+        );
     } else {
         userData.form[lastField] = response;
     }
