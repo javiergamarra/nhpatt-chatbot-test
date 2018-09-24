@@ -17,6 +17,7 @@ const botBuilderAzure = require('botbuilder-azure');
 const requestPromise = require('request-promise');
 const promise = require('bluebird');
 const locationDialog = require('botbuilder-location');
+const path = require('path');
 
 const LOCALE = 'es_ES';
 const DEFAULT_USERNAME = process.env.LIFERAY_USER;
@@ -50,12 +51,11 @@ try {
 
     logging.log({level: 'debug', message: `Bot initialized...`});
 
-    /*
-        const tableName = 'botdata';
-        const azureTableClient = new botBuilderAzure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
-        const tableStorage = new botBuilderAzure.AzureBotStorage({gzipData: false}, azureTableClient);
-        bot.set('storage', tableStorage);
-    */
+    const tableName = 'botdata';
+    const azureTableClient = new botBuilderAzure.AzureTableClient(tableName, process.env['AzureWebJobsStorage']);
+    const tableStorage = new botBuilderAzure.AzureBotStorage({gzipData: false}, azureTableClient);
+    bot.localePath(path.join(__dirname, './locale'));
+    bot.set('storage', tableStorage);
 
     const mapLibrary = locationDialog.createLibrary(process.env.BING_MAP || '');
     mapLibrary.dialog('confirm-dialog', createDialog(), true);
