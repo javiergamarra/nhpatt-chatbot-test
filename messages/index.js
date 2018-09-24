@@ -6,7 +6,7 @@ const logging = winston.createLogger({
     level: 'debug',
     format: winston.format.json(),
     transports: [
-        new winston.transports.File({filename: 'D:/home/site/wwwroot/messages/error.log', level: 'debug'}),
+        new winston.transports.File({filename: 'D:/home/site/wwwroot/debug.log', level: 'debug'}),
     ]
 });
 
