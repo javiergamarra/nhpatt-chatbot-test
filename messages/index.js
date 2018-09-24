@@ -86,11 +86,17 @@ try {
 
     bot.dialog('survey', [
         session => {
+
+            logging.log({level: 'debug', message: 'Survey...'});
+
             setTimeout(() => builder.Prompts.number(session, 'No me gustaría que me hiciesen chatarra! 😯 ' +
                 '¿me ayudas con una buena valoración? ' +
                 'Del 1 al 5, siendo 1 muy poco satisfecho 😞 y 5 muuuuy satisfecho 😊'), 3000);
         },
         (session, results, next) => {
+
+            logging.log({level: 'debug', message: 'Thanks...'});
+
             session.userData.valoration = results.response;
             let review = results.response < 3 ? '😞' : '😊';
             session.send(review + ' Muchas gracias!');
@@ -150,6 +156,8 @@ try {
     ).matches('Parte', [
         (session, results, next) => {
 
+            logging.log({level: 'debug', message: 'Parte...'});
+
             if (results.entities && results.entities.length) {
                 session.send('Ok, entendido, un parte de %s', results.entities[0].entity);
                 next();
@@ -162,6 +170,7 @@ try {
         },
         (session, results) => {
 
+            logging.log({level: 'debug', message: 'Encuesta...'});
 
             session.send('Ok, no te preocupes de nada, en un par de minutos habremos acabado. 😉');
             session.send('Vamos a hacerte una serie de preguntas para poder ayudarte mejor');
@@ -173,7 +182,8 @@ try {
                 return JSON.parse(message.definition);
             }).then(function (result) {
 
-                // session.send(JSON.stringify(result));
+                logging.log({level: 'debug', message: 'Result of getting structure...'});
+                logging.log({level: 'debug', message: JSON.stringify(result)});
 
                 let random = '' + Math.random();
                 let numberOfFields = result.fields.length;
@@ -194,6 +204,7 @@ try {
         (session, results, next) => {
 
             processResults(session, results).then(() => {
+                logging.log({level: 'debug', message: 'Sending record...'});
                 logging.log({level: 'debug', message: JSON.stringify(session.userData.form)});
                 return post(session, 'ddl.ddlrecord/add-record',
                     {
@@ -204,6 +215,9 @@ try {
                     }
                 )
             }).then(() => {
+
+                logging.log({level: 'debug', message: 'Fin!'});
+
                 session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.conversationData.name);
 
                 timeout(session,
@@ -235,6 +249,8 @@ try {
         }
     ]).matches('Seguros', [
         (session) => {
+
+            logging.log({level: 'debug', message: 'Seguros...'});
 
             timeout(session, 'Me alegra que me hagas esa pregunta, tenemos los mejores seguros de coches del mercado.', 1000);
             timeout(session, 'Disponemos de cuatro tipos de seguro de coche: Todo riesgo, a terceros, con franquicia y para coches clásicos.', 3000);
@@ -319,6 +335,9 @@ function processResults(session, results) {
 
     const response = results.response;
 
+    logging.log({level: 'debug', message: 'Parsing fields...'});
+    logging.log({level: 'debug', message: JSON.stringify(response)});
+
     if (response.geo) {
         userData.form[lastField] = '{\"latitude\":' + response.geo.latitude + ', \"longitude\":' + response.geo.longitude + '}';
     } else if (response.resolution) {
@@ -331,7 +350,10 @@ function processResults(session, results) {
         const file = response[0];
 
         return requestPromise({encoding: null, uri: file.contentUrl}).then(function (response) {
-            // session.send(JSON.stringify(file));
+
+            logging.log({level: 'debug', message: 'Retrieving file...'});
+            logging.log({level: 'debug', message: JSON.stringify(file)});
+
             const randomNumber = ('' + Math.random()).substr(2);
 
             let extension = file.contentType === 'image/png' ? '.png' :
@@ -345,7 +367,7 @@ function processResults(session, results) {
                 'addGuestPermissions': true
             };
 
-            return post(session, 'dlapp/add-file-entry', {
+            const form = {
                 'repositoryId': LIFERAY_REPOSITORY_ID,
                 'folderId': LIFERAY_FOLDER_ID,
                 'sourceFileName': fileName,
@@ -355,7 +377,12 @@ function processResults(session, results) {
                 'changeLog': '-',
                 'bytes': '[' + [...response].toString() + ']',
                 'serviceContext': JSON.stringify(serviceContext)
-            })
+            };
+
+            logging.log({level: 'debug', message: 'Adding file...'});
+            logging.log({level: 'debug', message: JSON.stringify(form)});
+
+            return post(session, 'dlapp/add-file-entry', form)
         }).then(function (response) {
             const obj = JSON.parse(response);
             userData.form[userData.lastField.name] = '{' +
@@ -364,6 +391,9 @@ function processResults(session, results) {
                 '"version":1.0,' +
                 `folderId":${LIFERAY_FOLDER_ID},'` +
                 '"title":"' + obj.fileName + '"}';
+
+            logging.log({level: 'debug', message: 'Linking file...'});
+            logging.log({level: 'debug', message: JSON.stringify(userData)});
         });
     } else {
         userData.form[lastField] = response;
@@ -421,6 +451,7 @@ function post(session, url, form) {
 function tryToLogin(session) {
     const message = session.message;
 
+    logging.log({level: 'debug', message: 'Trying login...'});
     logging.log({level: 'debug', message: JSON.stringify(message)});
 
     if (message && message.text && message.text.indexOf('start') !== -1) {
