@@ -81,7 +81,7 @@ try {
     const LUIS_APP_ID = process.env.LuisAppId;
     const LUIS_API_KEY = process.env.LuisAPIKey;
     const LUIS_API_HOSTNAME = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com';
-    const LUIS_API_URL = 'https://' + LUIS_API_HOSTNAME + '/luis/v2.0/apps/' + LUIS_APP_ID + '&subscription-key=' + LUIS_API_KEY;
+    const LUIS_API_URL = 'https://' + LUIS_API_HOSTNAME + '/luis/v2.0/apps/' + LUIS_APP_ID + '?subscription-key=' + LUIS_API_KEY;
 
     const recognizer = new builder.LuisRecognizer(LUIS_API_URL);
 
