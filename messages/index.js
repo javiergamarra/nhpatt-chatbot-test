@@ -361,12 +361,6 @@ function processResults(session, results) {
 
             let fileName = file.name || (randomNumber + extension);
 
-            const serviceContext = {
-                // "userId": __,
-                'scopeGroupId': LIFERAY_GROUP_ID,
-                'addGuestPermissions': true
-            };
-
             const form = {
                 'repositoryId': LIFERAY_REPOSITORY_ID,
                 'folderId': LIFERAY_FOLDER_ID,
@@ -376,7 +370,9 @@ function processResults(session, results) {
                 'description': '-',
                 'changeLog': '-',
                 'bytes': '[' + [...response].toString() + ']',
-                'serviceContext': JSON.stringify(serviceContext)
+                '+serviceContext': 'com.liferay.portal.service.ServiceContext',
+                'serviceContext.scopeGroupId': LIFERAY_GROUP_ID,
+                'serviceContext.addGuestPermissions': true,
             };
 
             logging.log({level: 'debug', message: 'Adding file...'});
