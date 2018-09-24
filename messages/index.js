@@ -19,8 +19,8 @@ const promise = require('bluebird');
 const locationDialog = require('botbuilder-location');
 
 const LOCALE = 'es_ES';
-const USERNAME = process.env.LIFERAY_USER;
-const PASSWORD = process.env.LIFERAY_PASSWORD;
+const DEFAULT_USERNAME = process.env.LIFERAY_USER;
+const DEFAULT_PASSWORD = process.env.LIFERAY_PASSWORD;
 const USE_EMULATOR = process.env.NODE_ENV === 'localhost';
 const SERVER_URL = (USE_EMULATOR ? 'http://localhost:8080/' : process.env.URL) + 'api/jsonws/';
 
@@ -58,7 +58,9 @@ try {
     */
 
     const mapLibrary = locationDialog.createLibrary(process.env.BING_MAP || '');
+    mapLibrary.dialog('confirm-dialog', createDialog(), true);
     bot.library(mapLibrary);
+
 
     bot.dialog('survey', [
         session => {
@@ -83,23 +85,19 @@ try {
 
     const recognizer = new builder.LuisRecognizer(LUIS_API_URL);
 
-    logging.log({level: 'debug', message: `LUIS settings...`});
+    logging.log({level: 'debug', message: `LUIS settings... ${LUIS_API_URL}`});
 
     const intents = new builder.IntentDialog({recognizers: [recognizer]}).onBegin(session => {
+
+        logging.log({level: 'debug', message: 'Hi!...'});
 
         session.conversationData.name = '';
 
         tryToLogin(session);
 
-        logging.log({level: 'debug', message: 'Hi!...'});
-
         session.send(['Te damos la bienvenida a Liferay Mutual! ¿Cómo puedo ayudarte?', 'Hola! ¿Cómo puedo ayudarte?',]);
 
-        session.preferredLocale('es', function (err) {
-            if (err) {
-                session.error(err);
-            }
-        });
+        session.preferredLocale('es', err => logging.log({level: 'debug', message: JSON.stringify(err)}));
     }).matches('Greeting', [
         (session, results, next) => {
 
@@ -235,9 +233,7 @@ try {
     ]).matches('Cancel', (session) => {
         session.send('You reached Cancel intent, you said \'%s\'.', session.message.text);
         session.conversationData = {};
-    }).onDefault((session) => {
-        session.send('Sorry, I did not understand \'%s\'.', session.message.text);
-    });
+    }).onDefault(session => session.send('Sorry, I did not understand \'%s\'.', session.message.text));
 
     logging.log({level: 'debug', message: `Dialogs initialized...`});
 
@@ -387,13 +383,10 @@ function createPrompts(session, label, field) {
 
 function post(session, url, form) {
 
-    let post1 = requestPromise.post(SERVER_URL + url, {form});
+    logging.log({level: 'debug', message: `post... ${url}`});
 
-    if (session.userData && session.userData.username) {
-        return post1.auth(session.userData.username, session.userData.password, true);
-    } else {
-        return post1.auth(USERNAME, PASSWORD, true);
-    }
+    const request = requestPromise.post(SERVER_URL + url, {form});
+    return request.auth(session.userData.username || DEFAULT_USERNAME, session.userData.password || DEFAULT_PASSWORD, true);
 }
 
 function tryToLogin(session) {
@@ -409,14 +402,15 @@ function tryToLogin(session) {
 }
 
 function timeout(session, message, delay) {
+
+    logging.log({level: 'debug', message: `delay`});
+
     session.sendTyping();
     setTimeout(() => {
         session.send(message);
         session.sendTyping();
     }, delay);
 }
-
-lib.dialog('confirm-dialog', createDialog(), true);
 
 function createDialog() {
     return createBaseDialog().onBegin(function (session, args) {
