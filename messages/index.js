@@ -15,9 +15,12 @@ logging.log({level: 'debug', message: 'Starting log...'});
 const builder = require('botbuilder');
 const botBuilderAzure = require('botbuilder-azure');
 const requestPromise = require('request-promise');
+const curl = require('request-to-curl');
 const promise = require('bluebird');
 const locationDialog = require('botbuilder-location');
 const path = require('path');
+
+console.log(curl);
 
 const LOCALE = 'es_ES';
 const DEFAULT_USERNAME = process.env.LIFERAY_USER;
@@ -82,7 +85,6 @@ try {
     const mapLibrary = locationDialog.createLibrary(LIFERAY_BING_KEY || '');
     mapLibrary.dialog('confirm-dialog', createDialog(), true);
     bot.library(mapLibrary);
-
 
     bot.dialog('survey', [
         session => {
@@ -178,6 +180,11 @@ try {
             session.userData.type = results.response;
 
             post(session, 'ddm.ddmstructure/get-structure', {'structureId': LIFERAY_STRUCTURE_ID}).then(response => {
+
+                logging.log({level: 'debug', message: `... response ...`});
+
+                logging.log({level: 'debug', message: response.request.req.toCurl()});
+
                 const message = JSON.parse(response);
                 return JSON.parse(message.definition);
             }).then(function (result) {
@@ -380,6 +387,8 @@ function processResults(session, results) {
             return post(session, 'dlapp/add-file-entry', form)
         }).then(function (response) {
 
+            logging.log({level: 'debug', message: response.request.req.toCurl()});
+
             const obj = JSON.parse(response);
 
             logging.log({level: 'debug', message: 'Parsing file response...'});
@@ -445,19 +454,22 @@ function createPrompts(session, label, field) {
 
 function post(session, url, form) {
 
-    const apiUrl = SERVER_URL + url;
+    const uri = SERVER_URL + url;
     const user = (session.userData && session.userData.username) || DEFAULT_USERNAME;
     const pass = (session.userData && session.userData.password) || DEFAULT_PASSWORD;
 
-    logging.log({level: 'debug', message: `post... ${apiUrl} with authentication ${user} and password ${pass}`});
+    logging.log({level: 'debug', message: `post... ${uri} with authentication ${user} and password ${pass}`});
+    logging.log({level: 'debug', message: `... request ...`});
 
-    return requestPromise({
+    const options = {
         method: 'POST',
-        uri: apiUrl,
-        form: form,
-        headers: {},
+        uri, form,
         auth: {user, pass, sendImmediately: true}
-    });
+    };
+
+    logging.log({level: 'debug', message: `... options ... ${options}`});
+
+    return requestPromise(options);
 }
 
 function tryToLogin(session) {
