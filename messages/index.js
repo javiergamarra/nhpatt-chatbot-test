@@ -446,10 +446,10 @@ function createPrompts(session, label, field) {
 function post(session, url, form) {
 
     const apiUrl = SERVER_URL + url;
-    const user = session.userData.username || DEFAULT_USERNAME;
-    const pass = session.userData.password || DEFAULT_PASSWORD;
+    const user = (session.userData && session.userData.username) || DEFAULT_USERNAME;
+    const pass = (session.userData && session.userData.password) || DEFAULT_PASSWORD;
 
-    logging.log({level: 'debug', message: `post... ${apiUrl} with authentication ${user} and password ${password}`});
+    logging.log({level: 'debug', message: `post... ${apiUrl} with authentication ${user} and password ${pass}`});
 
     return requestPromise({
         method: 'POST',
