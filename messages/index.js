@@ -24,7 +24,7 @@ const DEFAULT_USERNAME = process.env.LIFERAY_USER;
 const DEFAULT_PASSWORD = process.env.LIFERAY_PASSWORD;
 const LIFERAY_USER_PASSWORD = process.env.LIFERAY_USER_PASSWORD || process.env.USER_PASSWORD;
 const USE_EMULATOR = process.env.NODE_ENV === 'localhost';
-const SERVER_URL = (USE_EMULATOR ? 'http://localhost:8080/' : (process.env.LIFERAY_SERVER_URL || process.env.URL)) + 'api/jsonws/';
+const SERVER_URL = (USE_EMULATOR ? 'http://localhost:8080/' : (process.env.LIFERAY_SERVER_URL || process.env.URL)) + '/api/jsonws/';
 
 const LIFERAY_BING_KEY = process.env.LIFERAY_BING_KEY || process.env.BING_MAP;
 
@@ -445,16 +445,19 @@ function createPrompts(session, label, field) {
 
 function post(session, url, form) {
 
-    logging.log({level: 'debug', message: `post... ${url}`});
+    const apiUrl = SERVER_URL + url;
+    const user = session.userData.username || DEFAULT_USERNAME;
+    const pass = session.userData.password || DEFAULT_PASSWORD;
 
-    const request = requestPromise({
+    logging.log({level: 'debug', message: `post... ${apiUrl} with authentication ${user} and password ${password}`});
+
+    return requestPromise({
         method: 'POST',
-        uri: SERVER_URL + url,
+        uri: apiUrl,
         form: form,
-        headers: {}
+        headers: {},
+        auth: {user, pass, sendImmediately: true}
     });
-
-    return request.auth(session.userData.username || DEFAULT_USERNAME, session.userData.password || DEFAULT_PASSWORD, true);
 }
 
 function tryToLogin(session) {
