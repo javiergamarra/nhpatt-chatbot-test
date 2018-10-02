@@ -182,8 +182,6 @@ try {
 
                 logging.log({level: 'debug', message: `... response ...`});
 
-                logging.log({level: 'debug', message: response.request.req.toCurl()});
-
                 const message = JSON.parse(response);
                 return JSON.parse(message.definition);
             }).then(function (result) {
@@ -386,8 +384,6 @@ function processResults(session, results) {
             return post(session, 'dlapp/add-file-entry', form)
         }).then(function (response) {
 
-            logging.log({level: 'debug', message: response.request.req.toCurl()});
-
             const obj = JSON.parse(response);
 
             logging.log({level: 'debug', message: 'Parsing file response...'});
@@ -466,7 +462,7 @@ function post(session, url, form) {
         auth: {user, pass, sendImmediately: true}
     };
 
-    logging.log({level: 'debug', message: `... options ... ${options}`});
+    logging.log({level: 'debug', message: `... options ... ${JSON.stringify(options)}`});
 
     return requestPromise(options);
 }
