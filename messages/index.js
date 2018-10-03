@@ -35,7 +35,7 @@ const LIFERAY_STRUCTURE_ID = process.env.LIFERAY_STRUCTURE_ID || 157436;
 const LIFERAY_GROUP_ID = process.env.LIFERAY_GROUP_ID || 20152;
 const LIFERAY_RECORD_SET_ID = process.env.LIFERAY_RECORD_SET_ID || 271054;
 const LIFERAY_REPOSITORY_ID = process.env.LIFERAY_REPOSITORY_ID || (LIFERAY_GROUP_ID || 20152);
-const LIFERAY_FOLDER_ID = process.env.LIFERAY_FOLDER_ID || 184528;
+const LIFERAY_FOLDER_ID = process.env.LIFERAY_FOLDER_ID || 184570;
 
 logging.log({
     level: 'debug', message: `Environment variables: ${
