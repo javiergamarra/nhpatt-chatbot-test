@@ -23,6 +23,7 @@ const path = require('path');
 console.log(curl);
 
 const LOCALE = 'es_ES';
+const USE_DEFAULT_PASSWORD = process.env.LIFERAY_USE_DEFAULT_PASSWORD || false;
 const DEFAULT_USERNAME = process.env.LIFERAY_USER;
 const DEFAULT_PASSWORD = process.env.LIFERAY_PASSWORD;
 const LIFERAY_USER_PASSWORD = process.env.LIFERAY_USER_PASSWORD || process.env.USER_PASSWORD;
@@ -451,8 +452,8 @@ function createPrompts(session, label, field) {
 function post(session, url, form) {
 
     const uri = SERVER_URL + url;
-    const user = (session.userData && session.userData.username) || DEFAULT_USERNAME;
-    const pass = (session.userData && session.userData.password) || DEFAULT_PASSWORD;
+    const user = (!USE_DEFAULT_PASSWORD && session.userData && session.userData.username) || DEFAULT_USERNAME;
+    const pass = (!USE_DEFAULT_PASSWORD && session.userData && session.userData.password) || DEFAULT_PASSWORD;
 
     logging.log({level: 'debug', message: `post... ${uri} with authentication ${user} and password ${pass}`});
     logging.log({level: 'debug', message: `... request ...`});
