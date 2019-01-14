@@ -321,7 +321,10 @@ function createAndProcessFields(session, results, next, numberOfFields, field) {
 
         const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
              
+        logging.log({level: 'debug', message: JSON.stringify(dialogDatum) });        
         logging.log({level: 'debug', message: JSON.stringify(dialogDatum) });
+        logging.log({level: 'debug', message: JSON.stringify(numberOfFields) });
+        logging.log({level: 'debug', message: JSON.stringify(field.label[LOCALE]) });
 
         const label = dialogDatum + '/' + numberOfFields + ' - ' + field.label[LOCALE];
         
