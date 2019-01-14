@@ -20,9 +20,8 @@ const promise = require('bluebird');
 const locationDialog = require('botbuilder-location');
 const path = require('path');
 
-console.log(curl);
+const locale = 'en_US';
 
-const LOCALE = 'es_ES';
 const USE_DEFAULT_PASSWORD = process.env.LIFERAY_USE_DEFAULT_PASSWORD || false;
 const DEFAULT_USERNAME = process.env.LIFERAY_USER;
 const DEFAULT_PASSWORD = process.env.LIFERAY_PASSWORD;
@@ -68,7 +67,7 @@ try {
     const bot = new builder.UniversalBot(connector,
         {
             localizerSettings: {
-                defaultLocale: 'es',
+                defaultLocale: 'en',
                 botLocalePath: './locale'
             }
         }
@@ -92,9 +91,9 @@ try {
 
             logging.log({level: 'debug', message: 'Survey...'});
 
-            setTimeout(() => builder.Prompts.number(session, 'No me gustaría que me hiciesen chatarra! 😯 ' +
-                '¿me ayudas con una buena valoración? ' +
-                'Del 1 al 5, siendo 1 muy poco satisfecho 😞 y 5 muuuuy satisfecho 😊'), 3000);
+            setTimeout(() => builder.Prompts.number(session, 'I would not like them to make me scrap! 😯 ' +
+                'Can you help me with a good assessment? ' +
+                'From 1 to 5, 1 being very little satisfied 😞 and 5 sooo satisfied 😊'), 3000);
         },
         (session, results, next) => {
 
@@ -102,7 +101,7 @@ try {
 
             session.userData.valoration = results.response;
             let review = results.response < 3 ? '😞' : '😊';
-            session.send(review + ' Muchas gracias!');
+            session.send(review + ' Thank you very much!');
             next();
         }
     ]);
@@ -126,9 +125,9 @@ try {
 
         tryToLogin(session);
 
-        session.send(['Te damos la bienvenida a Liferay Mutual! ¿Cómo puedo ayudarte?', 'Hola! ¿Cómo puedo ayudarte?',]);
+        session.send(['Welcome to Liferay Mutual! How can I help you?', 'Hello! How can I help you?',]);
 
-        session.preferredLocale('es', err => logging.log({level: 'debug', message: JSON.stringify(err)}));
+        session.preferredLocale('en', err => logging.log({level: 'debug', message: JSON.stringify(err)}));
     }).matches('Greeting', [
         (session, results, next) => {
 
@@ -137,7 +136,7 @@ try {
             if (session.conversationData.name) {
                 next();
             } else {
-                builder.Prompts.text(session, 'Hola, te puedo preguntar cómo te llamas?');
+                builder.Prompts.text(session, 'Hello, what is your name?');
             }
         },
         (session) => {
@@ -148,35 +147,35 @@ try {
                 session.conversationData.name = session.message.text;
             }
             session.send([
-                'Encantado de conocerte %s, ¿en qué puedo ayudarte? 😊',
-                'Hola %s, bienvenido a Liferay Mutual. ¿En qué puedo ayudarte? 😊'
+                'Nice to meet you %s, can I help you? 😊',
+                'Hello %s, welcome to Liferay Mutual. How can I help you? 😊'
             ], session.conversationData.name);
 
-            session.send('A día de hoy, te puedo decir que seguros puedes contratar o dar un parte');
+            session.send('Today, I can tell you what Insurance you can Hire or make a CLAIM');
 
         }]
-    ).matches('Help', session => session.send('Has pedido ayuda... \'%s\'.', session.message.text)
-    ).matches('Parte', [
+    ).matches('Help', session => session.send('You have asked for help... \'%s\'.', session.message.text)
+    ).matches('Issue', [
         (session, results, next) => {
 
             logging.log({level: 'debug', message: 'Parte...'});
 
             if (results.entities && results.entities.length) {
-                session.send('Ok, entendido, un parte de %s', results.entities[0].entity);
+                session.send('Ok, I understand, a part about %s', results.entities[0].entity);
                 next();
             } else {
-                builder.Prompts.text(session, '¿Me puedes decir sobre qué tipo de seguro quieres dar de alta un parte?');
+                builder.Prompts.text(session, 'Can you tell me about what kind of insurance do you want to register a claim?');
             }
         },
-        session => {
-            builder.Prompts.confirm(session, '¿Has tenido un accidente de tráfico?');
+        (session) => {
+            builder.Prompts.confirm(session, 'Have you had a traffic accident?');
         },
         (session, results) => {
 
             logging.log({level: 'debug', message: 'Encuesta...'});
 
-            session.send('Ok, no te preocupes de nada, en un par de minutos habremos acabado. 😉');
-            session.send('Vamos a hacerte una serie de preguntas para poder ayudarte mejor');
+            session.send('Ok, do not worry about anything, in a couple of minutes we wil have finished. 😉');
+            session.send('We are going to ask you a series of questions to help you better');
 
             session.userData.type = results.response;
 
@@ -224,17 +223,17 @@ try {
 
                 logging.log({level: 'debug', message: 'Fin!'});
 
-                session.send('Ya hemos terminado %s, espero que haya sido rápido.', session.conversationData.name);
+                session.send('We have finished %s, I hope it was fast.', session.conversationData.name);
 
                 timeout(session,
-                    'Muchas gracias por la paciencia! En breve recibirás un correo electrónico con el ' +
-                    'acuse de recibo del alta del parte. Además podrás consultar su estado desde la página web' +
-                    ' o desde app, en el apartado de "Incidences".', 2000);
+                    'Thank you for the pacience! Shortly you will receive an email with the acknowledgment of ' +
+                    'receipt of the party. You can also check your status from the website or from the app, ' +
+                    'in the "Issues" section.', 2000);
 
                 timeout(session, [
-                    'Recuerda que para cualquier duda estamos disponibles en el teléfono 666999999.',
-                    'Si necesitas comunicar con nosotros durante la espara estamos disponibles en el teléfono 666999999 para cualquier consulta que requieras.',
-                    'Recuerda instalarte nuestra app!'
+                    'Remember that for any questions we are available at 666999999.',
+                    'If you need to communicate with us during the spara we are available at 666999999 for any consultation you require.',
+                    'Remember to install our app!'
                 ], 4000);
 
                 let random = Math.random();
@@ -248,27 +247,27 @@ try {
         },
         (session, results, next) => {
 
-            timeout(session, 'Muchas gracias por la paciencia!', 2000);
-            setTimeout(() => session.send('Nos vemos pronto! 😊'), 4000);
+            timeout(session, 'Thank you for the pacience!', 2000);
+            setTimeout(() => session.send('See you soon! 😊'), 4000);
 
             next();
         }
-    ]).matches('Seguros', [
+    ]).matches('Insurances', [
         (session) => {
 
             logging.log({level: 'debug', message: 'Seguros...'});
 
-            timeout(session, 'Me alegra que me hagas esa pregunta, tenemos los mejores seguros de coches del mercado.', 1000);
-            timeout(session, 'Disponemos de cuatro tipos de seguro de coche: Todo riesgo, a terceros, con franquicia y para coches clásicos.', 3000);
-            timeout(session, 'Esta es la página donde podrás encontrar toda la información: https://liferay-insurances-demo.liferay.org.es/web/liferay-mutual/car-insurance/third-party-insurance', 5000);
+            timeout(session, 'I am glad you ask me that question, we have the best car insurance in the market.', 2000);
+            timeout(session, 'We have four types of car insurance: All risk, third parties, franchise and classic cars.', 3000);
+            timeout(session, 'This is the page where you can find all the information: https://liferay-insurances-demo.liferay.org.es//web/liferay-mutual/car-insurance/third-party-insurance', 5000);
 
-            setTimeout(() => builder.Prompts.choice(session, 'Has encontrado algo que cuadre con lo que buscas?', ['Si', 'No']), 7000);
+            setTimeout(() => builder.Prompts.choice(session, 'Have you found something that matches what you are looking for?', ['Yes', 'No']), 7000);
         },
         (session) => {
 
             session.sendTyping();
             setTimeout(() => {
-                session.send('Encantado de haberte ayudado %s! :-D', session.conversationData.name || '');
+                session.send('Pleased to have helped you, %s! :-D', session.conversationData.name || '');
                 session.sendTyping();
             }, 1000);
 
@@ -412,16 +411,16 @@ function processResults(session, results) {
 
 function writeEncouragingMessages(dialogDatum, session) {
     if (dialogDatum === 2) {
-        session.send('Perfecto! Sin eso no habría podido darte de alta el parte :-J');
+        session.send('Perfect! Without that I would not have been able to register the part 😊');
     } else if (dialogDatum === 7) {
-        session.send('Gracias, ya estamos a punto de terminar.');
+        session.send('Thanks, we are about to finish.');
     } else if (session.userData.lastField && session.userData.lastField.dataType === 'date' && session.message.text) {
         if (session.message.text.toLowerCase() === 'hoy') {
-            session.send('En breve llegará la asistencia técnica a ayudarte. ' +
-                'Recibirás una notificación al teléfono móvil en el que podrás ver el camino que sigue la grúa hasta que se encuentre contigo.');
+            session.send('Shortly, technical assistance will come to help you. ' +
+                'You will receive a notification to the mobile phone where you can see the path that the crane follows until it is with you.');
         } else {
-            session.send('En breve recibirás un correo electrónico con el acuse de recibo del alta del parte. ' +
-                'Además podrás consultar su estado desde la página web o desde app, en el apartado de "Incidences"');
+            session.send('Shortly you will receive an email with the acknowledgment of receipt of the party. ' +
+                'You can also check your status from the website or from the app, in the "Issues" section.');
         }
     }
 }
@@ -433,7 +432,7 @@ function createPrompts(session, label, field) {
             {value: 'Sí', synonyms: ['Si', 'Sí', 'Yes']},
             {value: 'No', synonyms: ['No', 'Nop']}
         ];
-        builder.Prompts.choice(session, label, choices.indexOf('Sí') !== -1 ? choiceSynonyms : choices);
+        builder.Prompts.choice(session, label, choices.indexOf('Yes') !== -1 ? choiceSynonyms : choices);
     } else if ('date' === (field.dataType)) {
         builder.Prompts.time(session, label);
     } else if ('document-library' === (field.dataType)) {
