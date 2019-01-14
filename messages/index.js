@@ -324,9 +324,12 @@ function createAndProcessFields(session, results, next, numberOfFields, field) {
         logging.log({level: 'debug', message: JSON.stringify(dialogDatum) });
 
         const label = dialogDatum + '/' + numberOfFields + ' - ' + field.label[LOCALE];
+        
+        logging.log({level: 'debug', message: JSON.stringify(label) });
+        
         writeEncouragingMessages(dialogDatum, session);
                      
-        logging.log({level: 'debug', message: JSON.stringify(label) });
+        logging.log({level: 'debug', message: JSON.stringify("kk") });
 
         userData.lastField = field;
 
