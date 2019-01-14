@@ -317,16 +317,16 @@ function createAndProcessFields(session, results, next, numberOfFields, field) {
 
         const userData = session.userData;
         
-        logging.log({level: 'debug', userData );
+        logging.log({level: 'debug', userData });
 
         const dialogDatum = session.dialogData['BotBuilder.Data.WaterfallStep'] + 1;
              
-        logging.log({level: 'debug', dialogDatum );
+        logging.log({level: 'debug', dialogDatum });
 
         const label = dialogDatum + '/' + numberOfFields + ' - ' + field.label[LOCALE];
         writeEncouragingMessages(dialogDatum, session);
                      
-        logging.log({level: 'debug', label );
+        logging.log({level: 'debug', label });
 
         userData.lastField = field;
 
